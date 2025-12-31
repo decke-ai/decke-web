@@ -1,14 +1,9 @@
-import type { NextRequest } from "next/server";
-import { auth0 } from "./lib/auth0";
+import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
-
-export async function middleware(request: NextRequest) {
-  return await auth0.middleware(request);
+export function middleware() {
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
-  ],
+  matcher: ["/auth/:path*"],
 };
