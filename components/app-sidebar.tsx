@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useAnalytics } from "@/hooks/use-analytics";
+import { useOrganization } from "@/hooks/use-organization";
 import {
   Sidebar,
   SidebarContent,
@@ -49,6 +50,7 @@ export function AppSidebar() {
   const { user } = useAuth();
   const { state, toggleSidebar } = useSidebar();
   const { trackUserSignOut } = useAnalytics();
+  const { organizationId } = useOrganization();
 
   const isCollapsed = state === "collapsed";
 
@@ -62,19 +64,18 @@ export function AppSidebar() {
     window.location.href = "/auth/logout";
   };
 
-
   const homeNavItems = [
     { title: "Home", icon: Home, href: "/" },
   ];
 
   const dataNavItems = [
-    { title: "Searches", icon: Search, href: "/search" },
+    { title: "Searches", icon: Search, href: `/organizations/${organizationId}/searches` },
     { title: "Lists", icon: List, href: "/lists" },
   ];
 
   const recordsNavItems = [
-    { title: "Companies", icon: Building, href: "/companies" },
-    { title: "People", icon: Users, href: "/people" },
+    { title: "Companies", icon: Building, href: `/organizations/${organizationId}/records/companies` },
+    { title: "People", icon: Users, href: `/organizations/${organizationId}/records/people` },
   ];
 
   return (
@@ -141,7 +142,7 @@ export function AppSidebar() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/organization">
+              <Link href={`/organizations/${organizationId}`}>
                 <Building2 className="mr-2 h-4 w-4" />
                 Organization
               </Link>
@@ -191,7 +192,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === item.href}
+                    isActive={pathname === item.href || pathname.startsWith(item.href + "/")}
                     tooltip={item.title}
                   >
                     <Link href={item.href}>
@@ -213,7 +214,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === item.href}
+                    isActive={pathname === item.href || pathname.startsWith(item.href + "/")}
                     tooltip={item.title}
                   >
                     <Link href={item.href}>

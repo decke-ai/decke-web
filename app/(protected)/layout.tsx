@@ -17,16 +17,38 @@ interface PageConfig {
   icon: LucideIcon;
 }
 
+interface PagePattern {
+  pattern: RegExp;
+  config: PageConfig;
+}
+
+const PAGE_PATTERNS: PagePattern[] = [
+  { pattern: /^\/organizations\/[^/]+\/records\/companies$/, config: { title: "Companies", icon: Building } },
+  { pattern: /^\/organizations\/[^/]+\/records\/people$/, config: { title: "People", icon: Users } },
+  { pattern: /^\/organizations\/[^/]+\/searches$/, config: { title: "Searches", icon: Search } },
+  { pattern: /^\/organizations\/[^/]+$/, config: { title: "Organization", icon: Building2 } },
+];
+
 const PAGE_CONFIG: Record<string, PageConfig> = {
   "/": { title: "Home", icon: Home },
-  "/search": { title: "Searches", icon: Search },
   "/lists": { title: "Lists", icon: List },
-  "/companies": { title: "Companies", icon: Building },
-  "/people": { title: "People", icon: Users },
   "/account": { title: "Account", icon: User },
-  "/organization": { title: "Organization", icon: Building2 },
   "/credits": { title: "Credits", icon: Coins },
 };
+
+function getPageConfig(pathname: string): PageConfig {
+  if (PAGE_CONFIG[pathname]) {
+    return PAGE_CONFIG[pathname];
+  }
+
+  for (const { pattern, config } of PAGE_PATTERNS) {
+    if (pattern.test(pathname)) {
+      return config;
+    }
+  }
+
+  return { title: "Page", icon: Home };
+}
 
 export default function ProtectedLayout({
   children,
@@ -36,7 +58,7 @@ export default function ProtectedLayout({
   const pathname = usePathname();
   const { isAuthenticated, isLoading } = useAuth();
 
-  const pageConfig = PAGE_CONFIG[pathname] || { title: "Page", icon: Home };
+  const pageConfig = getPageConfig(pathname);
   const PageIcon = pageConfig.icon;
 
   useEffect(() => {
