@@ -17,9 +17,9 @@ import { PeopleTable } from "@/components/people/people-table";
 import { PersonDrawer } from "@/components/people/person-drawer";
 import { Business, Person } from "@/lib/explorium/types";
 import { cn } from "@/lib/utils";
-import { useOrganization } from "@/hooks/use-organization";
 
 const API_URL = "https://api.decke.ai";
+const TEMP_ORGANIZATION_ID = crypto.randomUUID();
 
 type SearchMode = "companies" | "people";
 
@@ -89,7 +89,6 @@ const PEOPLE_COLUMNS: { id: PeopleColumnId; label: string }[] = [
 ];
 
 export default function AISearchPage() {
-  const { organizationId } = useOrganization();
   const [searchMode, setSearchMode] = useState<SearchMode>("companies");
   const [query, setQuery] = useState("");
 
@@ -199,8 +198,8 @@ export default function AISearchPage() {
     setTotalResults(0);
 
     const endpoint = searchMode === "companies"
-      ? `${API_URL}/organizations/${organizationId}/companies/searches`
-      : `${API_URL}/organizations/${organizationId}/people/searches`;
+      ? `${API_URL}/organizations/${TEMP_ORGANIZATION_ID}/companies/searches`
+      : `${API_URL}/organizations/${TEMP_ORGANIZATION_ID}/people/searches`;
 
     try {
       const response = await fetch(endpoint, {
@@ -329,8 +328,8 @@ export default function AISearchPage() {
 
     const offset = (page - 1) * 50;
     const endpoint = searchMode === "companies"
-      ? `${API_URL}/organizations/${organizationId}/companies/searches`
-      : `${API_URL}/organizations/${organizationId}/people/searches`;
+      ? `${API_URL}/organizations/${TEMP_ORGANIZATION_ID}/companies/searches`
+      : `${API_URL}/organizations/${TEMP_ORGANIZATION_ID}/people/searches`;
 
     try {
       const response = await fetch(endpoint, {
