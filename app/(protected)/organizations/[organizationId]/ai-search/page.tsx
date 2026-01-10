@@ -18,9 +18,6 @@ import { PersonDrawer } from "@/components/people/person-drawer";
 import { Business, Person } from "@/lib/explorium/types";
 import { cn } from "@/lib/utils";
 
-const API_URL = "https://api.decke.ai";
-const TEMP_ORGANIZATION_ID = crypto.randomUUID();
-
 type SearchMode = "companies" | "people";
 
 interface ApiCompany {
@@ -198,14 +195,14 @@ export default function AISearchPage() {
     setTotalResults(0);
 
     const endpoint = searchMode === "companies"
-      ? `${API_URL}/organizations/${TEMP_ORGANIZATION_ID}/companies/searches`
-      : `${API_URL}/organizations/${TEMP_ORGANIZATION_ID}/people/searches`;
+      ? "/api/organizations/default/ai-search/companies"
+      : "/api/organizations/default/ai-search/people";
 
     try {
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: query.trim(), offset: 0, limit: 50 }),
+        body: JSON.stringify({ query: query.trim() }),
         signal: abortControllerRef.current.signal,
       });
 
@@ -326,16 +323,15 @@ export default function AISearchPage() {
     setIsStreaming(true);
     setProgressMessage("Loading page...");
 
-    const offset = (page - 1) * 50;
     const endpoint = searchMode === "companies"
-      ? `${API_URL}/organizations/${TEMP_ORGANIZATION_ID}/companies/searches`
-      : `${API_URL}/organizations/${TEMP_ORGANIZATION_ID}/people/searches`;
+      ? "/api/organizations/default/ai-search/companies"
+      : "/api/organizations/default/ai-search/people";
 
     try {
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: query.trim(), offset, limit: 50 }),
+        body: JSON.stringify({ query: query.trim(), page }),
       });
 
       if (!response.ok) {
