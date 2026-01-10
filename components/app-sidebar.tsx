@@ -15,6 +15,7 @@ import {
   Building,
   Users,
   Coins,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useAnalytics } from "@/hooks/use-analytics";
@@ -70,6 +71,7 @@ export function AppSidebar() {
 
   const dataNavItems = [
     { title: "Searches", icon: Search, href: `/organizations/${organizationId}/searches` },
+    { title: "AI Search", icon: Sparkles, href: `/organizations/${organizationId}/ai-search` },
     { title: "Lists", icon: List, href: "/lists" },
   ];
 
@@ -108,7 +110,7 @@ export function AppSidebar() {
               tooltip={isCollapsed ? user?.name || user?.email : undefined}
             >
               <div className={isCollapsed ? "flex items-center justify-center" : "flex items-center gap-2"}>
-                <Avatar className="h-6 w-6 rounded-lg">
+                <Avatar className="h-8 w-8 rounded-lg shrink-0">
                   {user?.picture && (
                     <AvatarImage
                       src={user.picture}
@@ -121,12 +123,17 @@ export function AppSidebar() {
                   </AvatarFallback>
                 </Avatar>
                 {!isCollapsed && (
-                  <span className="font-medium truncate">
-                    {user?.name || user?.email || "User"}
-                  </span>
+                  <div className="flex flex-col items-start min-w-0">
+                    <span className="text-sm font-medium truncate w-full">
+                      {user?.name || "User"}
+                    </span>
+                    <span className="text-xs text-muted-foreground truncate w-full">
+                      {user?.email}
+                    </span>
+                  </div>
                 )}
               </div>
-              {!isCollapsed && <ChevronDown className="h-4 w-4 opacity-50" />}
+              {!isCollapsed && <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />}
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="start">
@@ -185,7 +192,11 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Prospects</SidebarGroupLabel>
+          {isCollapsed ? (
+            <div className="mx-2 my-2 border-t border-border" />
+          ) : (
+            <SidebarGroupLabel>Prospects</SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               {dataNavItems.map((item) => (
@@ -207,7 +218,11 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Records</SidebarGroupLabel>
+          {isCollapsed ? (
+            <div className="mx-2 my-2 border-t border-border" />
+          ) : (
+            <SidebarGroupLabel>Records</SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               {recordsNavItems.map((item) => (

@@ -9,8 +9,17 @@ export async function GET() {
     if (!session) {
       return NextResponse.json({ user: null }, { status: 200 });
     }
+
+    const tokenResult = await auth0.getAccessToken();
+    console.log("=== AUTH0 SESSION ===");
+    console.log("User:", JSON.stringify(session.user, null, 2));
+    console.log("Access Token:", tokenResult.token);
+    console.log("ID Token:", session.tokenSet?.idToken);
+    console.log("=== END SESSION ===");
+
     return NextResponse.json({ user: session.user }, { status: 200 });
-  } catch {
+  } catch (error) {
+    console.error("Auth error:", error);
     return NextResponse.json({ user: null }, { status: 200 });
   }
 }

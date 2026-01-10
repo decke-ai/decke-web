@@ -666,10 +666,6 @@ export function PeopleTable({
     return <span>{label}</span>;
   };
 
-  if (people.length === 0) {
-    return null;
-  }
-
   return (
     <DndContext
       sensors={sensors}
@@ -699,9 +695,9 @@ export function PeopleTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {people.map((person) => (
+            {people.map((person, index) => (
               <TableRow
-                key={getPersonId(person)}
+                key={getPersonId(person) || `person-${index}`}
                 className="group hover:bg-muted/50 transition-colors cursor-pointer"
                 onClick={() => onPersonClick?.(person)}
               >

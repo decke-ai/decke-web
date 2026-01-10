@@ -614,10 +614,6 @@ export function CompanyTable({
     return <span>{label}</span>;
   };
 
-  if (companies.length === 0) {
-    return null;
-  }
-
   return (
     <DndContext
       sensors={sensors}
@@ -647,9 +643,9 @@ export function CompanyTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {companies.map((company) => (
+            {companies.map((company, index) => (
               <TableRow
-                key={getBusinessId(company)}
+                key={getBusinessId(company) || `company-${index}`}
                 className="group hover:bg-muted/50 transition-colors cursor-pointer"
                 onClick={() => onCompanyClick?.(company)}
               >
