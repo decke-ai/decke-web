@@ -1,3 +1,11 @@
 {
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "functions": {
+    "app/api/organizations/[organizationId]/ai-search/companies/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/organizations/[organizationId]/ai-search/people/route.ts": {
+      "maxDuration": 60
+    }
+  }
 }

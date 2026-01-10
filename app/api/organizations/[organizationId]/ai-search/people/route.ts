@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 const API_URL = process.env.API_URL || "https://api.decke.ai";
 
 export async function POST(
