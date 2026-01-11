@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Loader2, Building2, Users, ChevronLeft, ChevronRight, Columns3, Sparkles } from "lucide-react";
+import { Loader2, Building2, Users, ChevronLeft, ChevronRight, Columns3, Sparkles, MoreVertical, ListPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -564,13 +564,24 @@ export default function AISearchPage() {
                 {totalResults.toLocaleString("pt-BR")} {entityLabel.toLowerCase()}
               </span>
               {selectedIds.length > 0 && (
-                <Button
-                  variant="outline"
-                  className="h-9"
-                  onClick={handleSaveToList}
-                >
-                  {selectedIds.length} selected
-                </Button>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm text-muted-foreground border rounded-lg px-3 h-9 flex items-center">
+                    {selectedIds.length} selected
+                  </span>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-9 w-9">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuItem onClick={handleSaveToList}>
+                        <ListPlus className="h-4 w-4 mr-2" />
+                        Save
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               )}
             </div>
             <div className="flex items-center gap-3">
