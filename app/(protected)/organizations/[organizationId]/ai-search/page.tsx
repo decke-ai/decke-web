@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Loader2, Building2, Users, ChevronLeft, ChevronRight, ListPlus, Columns3, Sparkles } from "lucide-react";
+import { Loader2, Building2, Users, ChevronLeft, ChevronRight, Columns3, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -15,6 +15,7 @@ import { CompanyTable } from "@/components/companies/company-table";
 import { CompanyDrawer } from "@/components/companies/company-drawer";
 import { PeopleTable } from "@/components/people/people-table";
 import { PersonDrawer } from "@/components/people/person-drawer";
+import { SaveToListDialog } from "@/components/lists/save-to-list-dialog";
 import { Business, Person } from "@/lib/explorium/types";
 import { cn } from "@/lib/utils";
 
@@ -128,6 +129,7 @@ export default function AISearchPage() {
   const [isCompanyDrawerOpen, setIsCompanyDrawerOpen] = useState(false);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [isPersonDrawerOpen, setIsPersonDrawerOpen] = useState(false);
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -444,7 +446,11 @@ export default function AISearchPage() {
   };
 
   const handleSaveToList = () => {
-    console.log("Save to list", selectedIds);
+    setIsSaveDialogOpen(true);
+  };
+
+  const handleSaveSuccess = () => {
+    setSelectedIds([]);
   };
 
   const toggleCompanyColumn = (columnId: CompanyColumnId) => {
@@ -558,22 +564,16 @@ export default function AISearchPage() {
                 {totalResults.toLocaleString("pt-BR")} {entityLabel.toLowerCase()}
               </span>
               {selectedIds.length > 0 && (
-                <span className="text-sm text-muted-foreground border rounded-lg px-3 h-9 flex items-center">
-                  {selectedIds.length} selected
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              {selectedIds.length > 0 && (
                 <Button
                   variant="outline"
                   className="h-9"
                   onClick={handleSaveToList}
                 >
-                  <ListPlus className="h-4 w-4" />
-                  Save
+                  {selectedIds.length} selected
                 </Button>
               )}
+            </div>
+            <div className="flex items-center gap-3">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="h-9">
@@ -700,6 +700,15 @@ export default function AISearchPage() {
         person={selectedPerson}
         open={isPersonDrawerOpen}
         onOpenChange={setIsPersonDrawerOpen}
+      />
+
+      <SaveToListDialog
+        open={isSaveDialogOpen}
+        onOpenChange={setIsSaveDialogOpen}
+        selectedCount={selectedIds.length}
+        selectedIds={selectedIds}
+        entityType={searchMode}
+        onSaveSuccess={handleSaveSuccess}
       />
     </div>
   );
