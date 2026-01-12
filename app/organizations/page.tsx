@@ -36,7 +36,7 @@ export default function NewOrganizationPage() {
       if (!needsOnboarding) {
         router.replace(`/organizations/${organization.id}/searches`);
       } else if (backendUser) {
-        router.replace(`/onboarding?organizationId=${organization.id}&userId=${backendUser.id}`);
+        router.replace(`/organizations/${organization.id}/users/${backendUser.id}/onboardings`);
       } else {
         try {
           const response = await fetch("/api/authentication/create-user", {
@@ -46,7 +46,7 @@ export default function NewOrganizationPage() {
           });
           if (response.ok) {
             const data = await response.json();
-            router.replace(`/onboarding?organizationId=${organization.id}&userId=${data.user_id}`);
+            router.replace(`/organizations/${organization.id}/users/${data.user_id}/onboardings`);
           }
         } catch (err) {
           console.error("Failed to create user:", err);
@@ -99,7 +99,7 @@ export default function NewOrganizationPage() {
       if (data.stripe_checkout_url) {
         window.location.href = data.stripe_checkout_url;
       } else if (data.organization_id && data.user_id) {
-        router.push(`/onboarding?organizationId=${data.organization_id}&userId=${data.user_id}`);
+        router.push(`/organizations/${data.organization_id}/users/${data.user_id}/onboardings`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");

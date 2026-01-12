@@ -73,9 +73,9 @@ export default function ProtectedLayout({
     if (!isAuthenticated) return;
 
     if (!organization) {
-      router.replace("/organizations/new");
+      router.replace("/organizations");
     } else if (needsOnboarding && backendUser) {
-      router.replace(`/onboarding?organizationId=${organization.id}&userId=${backendUser.id}`);
+      router.replace(`/organizations/${organization.id}/users/${backendUser.id}/onboardings`);
     }
   }, [isLoading, isCheckingBackend, isAuthenticated, needsOnboarding, organization, backendUser, router]);
 

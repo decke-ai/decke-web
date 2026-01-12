@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -133,13 +133,13 @@ type OnboardingData = {
   icp: string[];
 };
 
-function OnboardingQuestionsContent() {
+export default function OnboardingPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const params = useParams();
   const { isLoading: isAuthLoading, isAuthenticated } = useAuth();
 
-  const organizationId = searchParams.get("organizationId") || "";
-  const userId = searchParams.get("userId") || "";
+  const organizationId = params.organizationId as string;
+  const userId = params.userId as string;
 
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -163,7 +163,7 @@ function OnboardingQuestionsContent() {
 
   useEffect(() => {
     if (!isAuthLoading && isAuthenticated && (!organizationId || !userId)) {
-      router.replace("/organizations/new");
+      router.replace("/organizations");
     }
   }, [isAuthLoading, isAuthenticated, organizationId, userId, router]);
 
@@ -531,19 +531,5 @@ function OnboardingQuestionsContent() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function OnboardingQuestionsPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center bg-muted/30">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      }
-    >
-      <OnboardingQuestionsContent />
-    </Suspense>
   );
 }
