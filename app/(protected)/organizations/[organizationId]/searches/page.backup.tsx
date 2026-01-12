@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Check, Loader2, Building2, Users, ChevronLeft, ChevronRight, ListPlus, Columns3, MoreVertical, Filter, X } from "lucide-react";
+import { Check, Loader2, Building2, Users, ChevronLeft, ChevronRight, ListPlus, Columns3, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,11 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { CompanyFilters } from "@/components/companies/company-filters";
 import { CompanyTable } from "@/components/companies/company-table";
@@ -79,7 +74,7 @@ export default function SearchPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);
   const [hiddenCompanyColumns, setHiddenCompanyColumns] = useState<CompanyColumnId[]>([]);
   const [hiddenPeopleColumns, setHiddenPeopleColumns] = useState<PeopleColumnId[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Business | null>(null);
@@ -418,103 +413,68 @@ export default function SearchPage() {
   const entityLabel = searchMode === "companies" ? "Companies" : "People";
 
   return (
-    <div className="flex flex-col h-full p-6">
-      <div className="flex flex-col h-full min-h-0">
-        <div className="flex items-center justify-between h-10 flex-shrink-0 mb-3">
-          <div className="flex items-center gap-3">
-            <Popover open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="h-9 gap-2">
-                  <Filter className="h-4 w-4" />
-                  Filters
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-80 p-0">
-                <div className="flex items-center justify-between p-4 border-b">
-                  <h3 className="font-semibold text-sm">Filters</h3>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => setIsFiltersOpen(false)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="max-h-96 overflow-y-auto p-4">
-                  {searchMode === "companies" ? (
-                    <CompanyFilters
-                      filters={companyFilters}
-                      onChange={setCompanyFilters}
-                      onClear={handleClearFilters}
-                    />
-                  ) : (
-                    <PeopleFiltersComponent
-                      filters={peopleFilters}
-                      onChange={setPeopleFilters}
-                      onClear={handleClearFilters}
-                    />
-                  )}
-                </div>
-                <div className="p-4 border-t">
-                  <Button
-                    onClick={() => {
-                      handleSearch();
-                      setIsFiltersOpen(false);
-                    }}
-                    disabled={isLoading}
-                    className="w-full"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Check className="h-4 w-4" />
-                    )}
-                    Apply filters
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
+    <div className="flex h-full">
+      <div
+        className={cn(
+          "border-r flex flex-col h-full overflow-hidden transition-all duration-300 ease-in-out",
+          isFiltersCollapsed ? "w-0 border-r-0" : "w-72"
+        )}
+      >
+        <div className="w-72 flex flex-col h-full">
+          <div className="p-4">
+            <h2 className="font-semibold text-sm">Filters</h2>
+          </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="h-9">
-                  <Columns3 className="h-4 w-4" />
-                  Columns
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                {searchMode === "companies"
-                  ? COMPANY_COLUMNS.filter((c) => c.id !== "name").map((column) => (
-                      <DropdownMenuItem
-                        key={column.id}
-                        onSelect={(e) => e.preventDefault()}
-                        className="flex items-center justify-between"
-                      >
-                        <span>{column.label}</span>
-                        <Switch
-                          checked={!hiddenCompanyColumns.includes(column.id)}
-                          onCheckedChange={() => toggleCompanyColumn(column.id)}
-                        />
-                      </DropdownMenuItem>
-                    ))
-                  : PEOPLE_COLUMNS.filter((c) => c.id !== "name").map((column) => (
-                      <DropdownMenuItem
-                        key={column.id}
-                        onSelect={(e) => e.preventDefault()}
-                        className="flex items-center justify-between"
-                      >
-                        <span>{column.label}</span>
-                        <Switch
-                          checked={!hiddenPeopleColumns.includes(column.id)}
-                          onCheckedChange={() => togglePeopleColumn(column.id)}
-                        />
-                      </DropdownMenuItem>
-                    ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div className="flex-1 overflow-y-auto p-4">
+            {searchMode === "companies" ? (
+              <CompanyFilters
+                filters={companyFilters}
+                onChange={setCompanyFilters}
+                onClear={handleClearFilters}
+              />
+            ) : (
+              <PeopleFiltersComponent
+                filters={peopleFilters}
+                onChange={setPeopleFilters}
+                onClear={handleClearFilters}
+              />
+            )}
+          </div>
+          <div className="p-4">
+            <Button
+              onClick={handleSearch}
+              disabled={isLoading}
+              className="w-full"
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4" />
+              )}
+              Apply filters
+            </Button>
+          </div>
+        </div>
+      </div>
 
-            <div className="flex rounded-lg bg-muted p-1 border">
+      <div className="flex-1 flex flex-col h-full overflow-hidden p-6">
+        <div className="flex flex-col h-full min-h-0">
+          <div className="flex items-center justify-between h-10 flex-shrink-0 mb-3">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setIsFiltersCollapsed(!isFiltersCollapsed)}
+              >
+                {isFiltersCollapsed ? (
+                  <ChevronRight className="h-4 w-4" />
+                ) : (
+                  <ChevronLeft className="h-4 w-4" />
+                )}
+              </Button>
+
+              <div className="flex rounded-lg bg-muted p-1 border">
                 <button
                   onClick={() => handleModeChange("companies")}
                   className={cn(
@@ -560,6 +520,45 @@ export default function SearchPage() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
+            </div>
+            <div className="flex items-center gap-3">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="h-9">
+                    <Columns3 className="h-4 w-4" />
+                    Columns
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {searchMode === "companies"
+                    ? COMPANY_COLUMNS.filter((c) => c.id !== "name").map((column) => (
+                        <DropdownMenuItem
+                          key={column.id}
+                          onSelect={(e) => e.preventDefault()}
+                          className="flex items-center justify-between"
+                        >
+                          <span>{column.label}</span>
+                          <Switch
+                            checked={!hiddenCompanyColumns.includes(column.id)}
+                            onCheckedChange={() => toggleCompanyColumn(column.id)}
+                          />
+                        </DropdownMenuItem>
+                      ))
+                    : PEOPLE_COLUMNS.filter((c) => c.id !== "name").map((column) => (
+                        <DropdownMenuItem
+                          key={column.id}
+                          onSelect={(e) => e.preventDefault()}
+                          className="flex items-center justify-between"
+                        >
+                          <span>{column.label}</span>
+                          <Switch
+                            checked={!hiddenPeopleColumns.includes(column.id)}
+                            onCheckedChange={() => togglePeopleColumn(column.id)}
+                          />
+                        </DropdownMenuItem>
+                      ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
@@ -636,7 +635,7 @@ export default function SearchPage() {
             </Button>
           </div>
         </div>
-
+      </div>
 
       <CompanyDrawer
         company={selectedCompany}

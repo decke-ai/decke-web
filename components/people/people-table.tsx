@@ -8,6 +8,12 @@ import {
   Globe,
   Building2,
   ChevronRight,
+  Type,
+  Briefcase,
+  MapPin,
+  History,
+  Lightbulb,
+  Heart,
 } from "lucide-react";
 import {
   DndContext,
@@ -177,6 +183,7 @@ interface PeopleTableProps {
   onSelectChange: (ids: string[]) => void;
   hiddenColumns?: ColumnId[];
   onPersonClick?: (person: Person) => void;
+  startIndex?: number;
 }
 
 function SortableHeader({
@@ -235,9 +242,8 @@ function SortableHeader({
   };
 
   const isNonDraggable = column.id === "select" || column.id === "name";
-  const isLastStickyColumn = column.id === "name";
   const canResize = column.id !== "select";
-  const showSeparator = column.id !== "select";
+  const showSeparator = true;
 
   return (
     <TableHead
@@ -245,12 +251,15 @@ function SortableHeader({
       style={style}
       className={cn(
         "text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b",
+        column.id === "select" && "px-0",
         isDragging && "bg-muted z-50",
-        isLastStickyColumn && "after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border",
-        showSeparator && !isLastStickyColumn && "after:absolute after:right-0 after:top-2 after:bottom-2 after:w-px after:bg-border"
+        showSeparator && "after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border"
       )}
     >
-      <div className="flex items-center gap-1 pr-2">
+      <div className={cn(
+        "flex items-center gap-1",
+        column.id !== "select" && "pr-2"
+      )}>
         {!isNonDraggable && (
           <span
             {...attributes}
@@ -283,8 +292,9 @@ export function PeopleTable({
   onSelectChange,
   hiddenColumns = [],
   onPersonClick,
+  startIndex = 0,
 }: PeopleTableProps) {
-
+  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
   const [resizingColumnId, setResizingColumnId] = useState<ColumnId | null>(null);
   const resizeStartXRef = useRef(0);
   const resizeStartWidthRef = useRef(0);
@@ -501,22 +511,38 @@ export function PeopleTable({
     }
   };
 
-  const renderCellContent = (columnId: ColumnId, person: Person) => {
+  const renderCellContent = (columnId: ColumnId, person: Person, rowIndex: number) => {
     switch (columnId) {
-      case "select":
+      case "select": {
+        const personId = getPersonId(person);
+        const isSelected = selectedIds.includes(personId);
+        const isHovered = hoveredRowId === personId;
+        const rowNumber = startIndex + rowIndex + 1;
+        const showCheckbox = isSelected || isHovered;
+
         return (
-          <div onClick={(e) => e.stopPropagation()}>
-            <Checkbox
-              checked={selectedIds.includes(getPersonId(person))}
-              onCheckedChange={() => handleSelectOne(getPersonId(person))}
-              className="cursor-pointer"
-            />
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center justify-center w-full min-h-4"
+          >
+            {showCheckbox ? (
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={() => handleSelectOne(personId)}
+                className="cursor-pointer"
+              />
+            ) : (
+              <span className="text-xs text-muted-foreground tabular-nums text-center leading-4">
+                {rowNumber}
+              </span>
+            )}
           </div>
         );
+      }
       case "name":
         return (
-          <div className="flex items-center gap-3">
-            <Avatar className="h-8 w-8 rounded-lg flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <Avatar className="h-5 w-5 rounded flex-shrink-0">
               {person.profile_picture ? (
                 <AvatarImage
                   src={person.profile_picture}
@@ -524,8 +550,8 @@ export function PeopleTable({
                   className="object-cover"
                 />
               ) : null}
-              <AvatarFallback className="rounded-lg bg-muted">
-                <User className="h-4 w-4 text-muted-foreground" />
+              <AvatarFallback className="rounded bg-muted">
+                <User className="h-3 w-3 text-muted-foreground" />
               </AvatarFallback>
             </Avatar>
             <span className="font-medium text-sm truncate">{getPersonFullName(person)}</span>
@@ -536,8 +562,8 @@ export function PeopleTable({
       case "company": {
         const companyName = person.company_name || "-";
         return (
-          <div className="flex items-center gap-3">
-            <Avatar className="h-8 w-8 rounded-lg flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <Avatar className="h-5 w-5 rounded flex-shrink-0">
               {person.company_logo ? (
                 <AvatarImage
                   src={person.company_logo}
@@ -545,8 +571,8 @@ export function PeopleTable({
                   className="object-contain"
                 />
               ) : null}
-              <AvatarFallback className="rounded-lg bg-muted">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
+              <AvatarFallback className="rounded bg-muted">
+                <Building2 className="h-3 w-3 text-muted-foreground" />
               </AvatarFallback>
             </Avatar>
             <span className="text-sm truncate" title={companyName}>
@@ -562,8 +588,9 @@ export function PeopleTable({
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-sm text-primary hover:underline cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
           >
-            <Globe className="h-3.5 w-3.5 flex-shrink-0" />
+            <ExternalLink className="h-3 w-3 flex-shrink-0" />
             <span className="truncate">{person.company_domain}</span>
           </a>
         ) : (
@@ -580,9 +607,10 @@ export function PeopleTable({
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-sm hover:underline cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
           >
-            <span className="truncate">{displayCompanyUrl}</span>
             <ExternalLink className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate">{displayCompanyUrl}</span>
           </a>
         ) : (
           <span className="text-sm">-</span>
@@ -607,9 +635,10 @@ export function PeopleTable({
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-sm hover:underline cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
           >
-            <span className="truncate">{displayUrl}</span>
             <ExternalLink className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate">{displayUrl}</span>
           </a>
         ) : (
           <span className="text-sm">-</span>
@@ -632,38 +661,76 @@ export function PeopleTable({
     }
   };
 
+  const LinkedInIcon = ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+      <rect width="4" height="12" x="2" y="9" />
+      <circle cx="4" cy="4" r="2" />
+    </svg>
+  );
+
+  const getColumnIcon = (columnId: ColumnId) => {
+    const iconClass = "h-3 w-3 text-muted-foreground";
+    switch (columnId) {
+      case "name":
+        return <Type className={iconClass} />;
+      case "job_title":
+        return <Briefcase className={iconClass} />;
+      case "company":
+        return <Building2 className={iconClass} />;
+      case "company_domain":
+        return <Globe className={iconClass} />;
+      case "company_linkedin":
+        return <LinkedInIcon className={iconClass} />;
+      case "location":
+        return <MapPin className={iconClass} />;
+      case "linkedin":
+        return <LinkedInIcon className={iconClass} />;
+      case "experiences":
+        return <History className={iconClass} />;
+      case "skills":
+        return <Lightbulb className={iconClass} />;
+      case "interests":
+        return <Heart className={iconClass} />;
+      default:
+        return null;
+    }
+  };
+
   const renderHeaderContent = (column: Column) => {
     if (column.id === "select") {
+      const checkboxState = allSelected ? true : someSelected ? "indeterminate" : false;
       return (
-        <Checkbox
-          checked={allSelected}
-          ref={(el) => {
-            if (el) {
-              (el as HTMLButtonElement).dataset.state = someSelected
-                ? "indeterminate"
-                : allSelected
-                ? "checked"
-                : "unchecked";
-            }
-          }}
-          onCheckedChange={handleSelectAll}
-          className="cursor-pointer"
-        />
+        <div className="flex items-center justify-center w-full">
+          <Checkbox
+            checked={checkboxState}
+            onCheckedChange={handleSelectAll}
+            className="cursor-pointer"
+          />
+        </div>
       );
     }
-    // Format label with chevron for prefix (e.g., "Person Name" -> "Person > Name")
+
+    const icon = getColumnIcon(column.id);
     const label = column.label;
     const prefixMatch = label.match(/^(Person|Company)\s+(.+)$/i);
+
     if (prefixMatch) {
       return (
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1.5">
+          {icon}
           {prefixMatch[1]}
           <ChevronRight className="h-3 w-3" />
           {prefixMatch[2]}
         </span>
       );
     }
-    return <span>{label}</span>;
+    return (
+      <span className="flex items-center gap-1.5">
+        {icon}
+        {label}
+      </span>
+    );
   };
 
   return (
@@ -674,8 +741,8 @@ export function PeopleTable({
     >
       <div className="h-full w-full">
         <Table className="w-max min-w-full">
-          <TableHeader>
-            <TableRow className="group hover:bg-transparent">
+          <TableHeader className="sticky top-0 z-20 bg-background after:absolute after:left-0 after:bottom-0 after:w-full after:h-px after:bg-border">
+            <TableRow className="group hover:bg-transparent border-b-0">
               <SortableContext
                 items={visibleColumns.map((c) => c.id)}
                 strategy={horizontalListSortingStrategy}
@@ -695,35 +762,49 @@ export function PeopleTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {people.map((person, index) => (
-              <TableRow
-                key={getPersonId(person) || `person-${index}`}
-                className="group hover:bg-muted/50 transition-colors cursor-pointer"
-                onClick={() => onPersonClick?.(person)}
-              >
-                {visibleColumns.map((column) => (
-                  <TableCell
-                    key={column.id}
-                    className={cn(
-                      "py-3 pr-6 overflow-hidden relative transition-colors",
-                      column.sticky && "sticky bg-background group-hover:bg-muted",
-                      column.id === "name" && "after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border"
-                    )}
-                    style={{
-                      width: column.width,
-                      minWidth: column.minWidth,
-                      maxWidth: column.maxWidth,
-                      ...(column.sticky && {
-                        left: column.stickyOffset ?? 0,
-                        zIndex: 10,
-                      }),
-                    }}
-                  >
-                    {renderCellContent(column.id, person)}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
+            {people.map((person, index) => {
+              const personId = getPersonId(person);
+              const isSelected = selectedIds.includes(personId);
+              return (
+                <TableRow
+                  key={personId || `person-${index}`}
+                  className={cn(
+                    "group transition-colors cursor-pointer border-b",
+                    isSelected ? "bg-muted" : "hover:bg-muted/50"
+                  )}
+                  onClick={() => onPersonClick?.(person)}
+                  onMouseEnter={() => setHoveredRowId(personId)}
+                  onMouseLeave={() => setHoveredRowId(null)}
+                >
+                  {visibleColumns.map((column, colIndex) => (
+                    <TableCell
+                      key={column.id}
+                      className={cn(
+                        "py-1.5 overflow-hidden relative transition-colors",
+                        column.id !== "select" && "pr-4",
+                        column.id === "select" && "px-0",
+                        !column.sticky && "border-r",
+                        column.sticky && "sticky",
+                        column.sticky && (isSelected ? "bg-muted" : "bg-background group-hover:bg-muted"),
+                        colIndex === visibleColumns.length - 1 && "border-r-0",
+                        (column.id === "select" || column.id === "name") && "after:absolute after:right-0 after:top-0 after:h-screen after:w-px after:bg-border"
+                      )}
+                      style={{
+                        width: column.width,
+                        minWidth: column.minWidth,
+                        maxWidth: column.maxWidth,
+                        ...(column.sticky && {
+                          left: column.stickyOffset ?? 0,
+                          zIndex: 10,
+                        }),
+                      }}
+                    >
+                      {renderCellContent(column.id, person, index)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              );
+            })}
             {people.length > 0 && (
               <TableRow className="border-b hover:bg-transparent">
                 <TableCell colSpan={visibleColumns.length} className="h-0 p-0" />

@@ -564,24 +564,20 @@ export default function AISearchPage() {
                 {totalResults.toLocaleString("pt-BR")} {entityLabel.toLowerCase()}
               </span>
               {selectedIds.length > 0 && (
-                <div className="flex items-center gap-1">
-                  <span className="text-sm text-muted-foreground border rounded-lg px-3 h-9 flex items-center">
-                    {selectedIds.length} selected
-                  </span>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-9 w-9">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                      <DropdownMenuItem onClick={handleSaveToList}>
-                        <ListPlus className="h-4 w-4 mr-2" />
-                        Save
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="h-9 gap-2">
+                      {selectedIds.length} selected
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={handleSaveToList}>
+                      <ListPlus className="h-4 w-4 mr-2" />
+                      Save
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
             <div className="flex items-center gap-3">

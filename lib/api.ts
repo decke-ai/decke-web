@@ -1,3 +1,5 @@
+import { auth0 } from "@/lib/auth0";
+
 const API_URL = process.env.API_URL || "https://api.decke.ai";
 
 type RequestOptions = {
@@ -6,6 +8,15 @@ type RequestOptions = {
   headers?: Record<string, string>;
   token?: string;
 };
+
+export async function getAuthToken(): Promise<string | null> {
+  try {
+    const tokenResult = await auth0.getAccessToken();
+    return tokenResult?.token || null;
+  } catch {
+    return null;
+  }
+}
 
 class ApiError extends Error {
   constructor(

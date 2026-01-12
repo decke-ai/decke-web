@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -56,7 +56,8 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+  const { isAuthenticated, isLoading, isCheckingBackend, needsOnboarding, organization, backendUser } = useAuth();
 
   const pageConfig = getPageConfig(pathname);
   const PageIcon = pageConfig.icon;
@@ -67,7 +68,28 @@ export default function ProtectedLayout({
     }
   }, [isLoading, isAuthenticated]);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (isLoading || isCheckingBackend) return;
+    if (!isAuthenticated) return;
+
+    if (!organization) {
+      router.replace("/organizations/new");
+    } else if (needsOnboarding && backendUser) {
+      router.replace(`/onboarding?organizationId=${organization.id}&userId=${backendUser.id}`);
+    }
+  }, [isLoading, isCheckingBackend, isAuthenticated, needsOnboarding, organization, backendUser, router]);
+
+  useEffect(() => {
+    if (isLoading || isCheckingBackend) return;
+    if (!isAuthenticated) return;
+    if (needsOnboarding) return;
+
+    if (organization && pathname === "/") {
+      router.replace(`/organizations/${organization.id}/searches`);
+    }
+  }, [isLoading, isCheckingBackend, isAuthenticated, needsOnboarding, organization, pathname, router]);
+
+  if (isLoading || isCheckingBackend) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -75,7 +97,7 @@ export default function ProtectedLayout({
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !organization) {
     return null;
   }
 

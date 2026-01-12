@@ -7,6 +7,12 @@ import {
   Globe,
   ExternalLink,
   ChevronRight,
+  Type,
+  FileText,
+  Briefcase,
+  Users,
+  DollarSign,
+  MapPin,
 } from "lucide-react";
 import {
   DndContext,
@@ -35,6 +41,7 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Business } from "@/lib/explorium/types";
 import { cn } from "@/lib/utils";
 
@@ -140,6 +147,7 @@ interface CompanyTableProps {
   onSelectChange: (ids: string[]) => void;
   hiddenColumns?: ColumnId[];
   onCompanyClick?: (company: Business) => void;
+  startIndex?: number;
 }
 
 function SortableHeader({
@@ -198,9 +206,8 @@ function SortableHeader({
   };
 
   const isNonDraggable = column.id === "select" || column.id === "name";
-  const isLastStickyColumn = column.id === "name";
   const canResize = column.id !== "select";
-  const showSeparator = column.id !== "select";
+  const showSeparator = true;
 
   return (
     <TableHead
@@ -208,14 +215,15 @@ function SortableHeader({
       style={style}
       className={cn(
         "text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b",
+        column.id === "select" && "px-0",
         isDragging && "bg-muted z-50",
-        // Separator after sticky column (full height)
-        isLastStickyColumn && "after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border",
-        // Separator for other columns (with padding)
-        showSeparator && !isLastStickyColumn && "after:absolute after:right-0 after:top-2 after:bottom-2 after:w-px after:bg-border"
+        showSeparator && "after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border"
       )}
     >
-      <div className="flex items-center gap-1 pr-2">
+      <div className={cn(
+        "flex items-center gap-1",
+        column.id !== "select" && "pr-2"
+      )}>
         {!isNonDraggable && (
           <span
             {...attributes}
@@ -249,7 +257,9 @@ export function CompanyTable({
   onSelectChange,
   hiddenColumns = [],
   onCompanyClick,
+  startIndex = 0,
 }: CompanyTableProps) {
+  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
 
   // Resize state - managed at parent level for better performance
   const [resizingColumnId, setResizingColumnId] = useState<ColumnId | null>(null);
@@ -477,22 +487,38 @@ export function CompanyTable({
     }
   };
 
-  const renderCellContent = (columnId: ColumnId, company: Business) => {
+  const renderCellContent = (columnId: ColumnId, company: Business, rowIndex: number) => {
     switch (columnId) {
-      case "select":
+      case "select": {
+        const businessId = getBusinessId(company);
+        const isSelected = selectedIds.includes(businessId);
+        const isHovered = hoveredRowId === businessId;
+        const rowNumber = startIndex + rowIndex + 1;
+        const showCheckbox = isSelected || isHovered;
+
         return (
-          <div onClick={(e) => e.stopPropagation()}>
-            <Checkbox
-              checked={selectedIds.includes(getBusinessId(company))}
-              onCheckedChange={() => handleSelectOne(getBusinessId(company))}
-              className="cursor-pointer"
-            />
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center justify-center w-full min-h-4"
+          >
+            {showCheckbox ? (
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={() => handleSelectOne(businessId)}
+                className="cursor-pointer"
+              />
+            ) : (
+              <span className="text-xs text-muted-foreground tabular-nums text-center leading-4">
+                {rowNumber}
+              </span>
+            )}
           </div>
         );
+      }
       case "name":
         return (
-          <div className="flex items-center gap-3">
-            <Avatar className="h-8 w-8 rounded-lg flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <Avatar className="h-5 w-5 rounded flex-shrink-0">
               {getCompanyLogo(company) ? (
                 <AvatarImage
                   src={getCompanyLogo(company)}
@@ -500,8 +526,8 @@ export function CompanyTable({
                   className="object-contain"
                 />
               ) : null}
-              <AvatarFallback className="rounded-lg bg-muted">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
+              <AvatarFallback className="rounded bg-muted">
+                <Building2 className="h-3 w-3 text-muted-foreground" />
               </AvatarFallback>
             </Avatar>
             <span className="font-medium text-sm truncate">{company.name}</span>
@@ -517,23 +543,30 @@ export function CompanyTable({
       }
       case "industry":
         return <span className="text-sm truncate">{smartCapitalize(company.industry)}</span>;
-      case "employees":
-        return (
-          <span className="text-sm">
-            {company.number_of_employees_range ||
-              company.employee_count?.toLocaleString("pt-BR") ||
-              company.employee_range ||
-              "-"}
-          </span>
+      case "employees": {
+        const employeeValue = company.number_of_employees_range ||
+          company.employee_count?.toLocaleString("pt-BR") ||
+          company.employee_range;
+        return employeeValue ? (
+          <Badge variant="secondary" className="text-[10px] whitespace-nowrap rounded-sm">
+            {employeeValue} employees
+          </Badge>
+        ) : (
+          <span className="text-sm text-muted-foreground">-</span>
         );
-      case "revenue":
-        return (
-          <span className="text-sm">
-            {company.yearly_revenue_range ||
-              company.revenue_range ||
-              (company.revenue ? `$${company.revenue.toLocaleString("en-US")}` : "-")}
-          </span>
+      }
+      case "revenue": {
+        const revenueValue = company.yearly_revenue_range ||
+          company.revenue_range ||
+          (company.revenue ? `$${company.revenue.toLocaleString("en-US")}` : null);
+        return revenueValue ? (
+          <Badge variant="secondary" className="text-[10px] whitespace-nowrap rounded-sm">
+            {revenueValue}
+          </Badge>
+        ) : (
+          <span className="text-sm text-muted-foreground">-</span>
         );
+      }
       case "location": {
         const location = formatLocation(company);
         return (
@@ -549,8 +582,9 @@ export function CompanyTable({
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-sm text-primary hover:underline cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
           >
-            <Globe className="h-3.5 w-3.5 flex-shrink-0" />
+            <ExternalLink className="h-3 w-3 flex-shrink-0" />
             <span className="truncate">{company.domain}</span>
           </a>
         ) : (
@@ -567,9 +601,10 @@ export function CompanyTable({
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-sm hover:underline cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
           >
-            <span className="truncate">{displayUrl}</span>
             <ExternalLink className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate">{displayUrl}</span>
           </a>
         ) : (
           <span className="text-sm">-</span>
@@ -580,38 +615,72 @@ export function CompanyTable({
     }
   };
 
+  const LinkedInIcon = ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+      <rect width="4" height="12" x="2" y="9" />
+      <circle cx="4" cy="4" r="2" />
+    </svg>
+  );
+
+  const getColumnIcon = (columnId: ColumnId) => {
+    const iconClass = "h-3 w-3 text-muted-foreground";
+    switch (columnId) {
+      case "name":
+        return <Type className={iconClass} />;
+      case "description":
+        return <FileText className={iconClass} />;
+      case "industry":
+        return <Briefcase className={iconClass} />;
+      case "employees":
+        return <Users className={iconClass} />;
+      case "revenue":
+        return <DollarSign className={iconClass} />;
+      case "location":
+        return <MapPin className={iconClass} />;
+      case "domain":
+        return <Globe className={iconClass} />;
+      case "linkedin":
+        return <LinkedInIcon className={iconClass} />;
+      default:
+        return null;
+    }
+  };
+
   const renderHeaderContent = (column: Column) => {
     if (column.id === "select") {
+      const checkboxState = allSelected ? true : someSelected ? "indeterminate" : false;
       return (
-        <Checkbox
-          checked={allSelected}
-          ref={(el) => {
-            if (el) {
-              (el as HTMLButtonElement).dataset.state = someSelected
-                ? "indeterminate"
-                : allSelected
-                ? "checked"
-                : "unchecked";
-            }
-          }}
-          onCheckedChange={handleSelectAll}
-          className="cursor-pointer"
-        />
+        <div className="flex items-center justify-center w-full">
+          <Checkbox
+            checked={checkboxState}
+            onCheckedChange={handleSelectAll}
+            className="cursor-pointer"
+          />
+        </div>
       );
     }
-    // Format label with chevron for prefix (e.g., "Company Name" -> "Company > Name")
+
+    const icon = getColumnIcon(column.id);
     const label = column.label;
     const prefixMatch = label.match(/^(Company)\s+(.+)$/i);
+
     if (prefixMatch) {
       return (
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1.5">
+          {icon}
           {prefixMatch[1]}
           <ChevronRight className="h-3 w-3" />
           {prefixMatch[2]}
         </span>
       );
     }
-    return <span>{label}</span>;
+    return (
+      <span className="flex items-center gap-1.5">
+        {icon}
+        {label}
+      </span>
+    );
   };
 
   return (
@@ -622,8 +691,8 @@ export function CompanyTable({
     >
       <div className="h-full w-full">
         <Table className="w-max min-w-full">
-          <TableHeader>
-            <TableRow className="group hover:bg-transparent">
+          <TableHeader className="sticky top-0 z-20 bg-background after:absolute after:left-0 after:bottom-0 after:w-full after:h-px after:bg-border">
+            <TableRow className="group hover:bg-transparent border-b-0">
               <SortableContext
                 items={visibleColumns.map((c) => c.id)}
                 strategy={horizontalListSortingStrategy}
@@ -643,20 +712,33 @@ export function CompanyTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {companies.map((company, index) => (
-              <TableRow
-                key={getBusinessId(company) || `company-${index}`}
-                className="group hover:bg-muted/50 transition-colors cursor-pointer"
-                onClick={() => onCompanyClick?.(company)}
-              >
-                {visibleColumns.map((column) => (
-                  <TableCell
-                    key={column.id}
-                    className={cn(
-                      "py-3 pr-6 overflow-hidden relative transition-colors",
-                      column.sticky && "sticky bg-background group-hover:bg-muted",
-                      column.id === "name" && "after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border"
-                    )}
+            {companies.map((company, index) => {
+              const businessId = getBusinessId(company);
+              const isSelected = selectedIds.includes(businessId);
+              return (
+                <TableRow
+                  key={businessId || `company-${index}`}
+                  className={cn(
+                    "group transition-colors cursor-pointer border-b",
+                    isSelected ? "bg-muted" : "hover:bg-muted/50"
+                  )}
+                  onClick={() => onCompanyClick?.(company)}
+                  onMouseEnter={() => setHoveredRowId(businessId)}
+                  onMouseLeave={() => setHoveredRowId(null)}
+                >
+                  {visibleColumns.map((column, colIndex) => (
+                    <TableCell
+                      key={column.id}
+                      className={cn(
+                        "py-1.5 overflow-hidden relative transition-colors",
+                        column.id !== "select" && "pr-4",
+                        column.id === "select" && "px-0",
+                        !column.sticky && "border-r",
+                        column.sticky && "sticky",
+                        column.sticky && (isSelected ? "bg-muted" : "bg-background group-hover:bg-muted"),
+                        colIndex === visibleColumns.length - 1 && "border-r-0",
+                        (column.id === "select" || column.id === "name") && "after:absolute after:right-0 after:top-0 after:h-screen after:w-px after:bg-border"
+                      )}
                       style={{
                         width: column.width,
                         minWidth: column.minWidth,
@@ -667,11 +749,12 @@ export function CompanyTable({
                         }),
                       }}
                     >
-                      {renderCellContent(column.id, company)}
+                      {renderCellContent(column.id, company, index)}
                     </TableCell>
                   ))}
                 </TableRow>
-            ))}
+              );
+            })}
             {/* Empty row for bottom border */}
             {companies.length > 0 && (
               <TableRow className="border-b hover:bg-transparent">

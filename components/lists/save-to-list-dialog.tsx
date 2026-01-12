@@ -52,19 +52,21 @@ export function SaveToListDialog({
   const [newListName, setNewListName] = useState("");
   const [isCreatingList, setIsCreatingList] = useState(false);
 
+  const recordType = entityType === "companies" ? "company" : "person";
+
   useEffect(() => {
     if (open && addToList) {
       fetchLists();
     }
-  }, [open, addToList]);
+  }, [open, addToList, entityType]);
 
   const fetchLists = async () => {
     setIsLoadingLists(true);
     try {
-      const response = await fetch("/api/lists");
+      const response = await fetch(`/api/lists?record_type=${recordType}`);
       if (response.ok) {
         const data = await response.json();
-        setLists(data.lists || data || []);
+        setLists(data.content || []);
       }
     } catch (error) {
       console.error("Error fetching lists:", error);
@@ -81,7 +83,10 @@ export function SaveToListDialog({
       const response = await fetch("/api/lists", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newListName.trim() }),
+        body: JSON.stringify({
+          name: newListName.trim(),
+          record_type: recordType,
+        }),
       });
 
       if (response.ok) {
@@ -102,12 +107,11 @@ export function SaveToListDialog({
     setIsSaving(true);
     try {
       if (addToList && selectedListId) {
-        await fetch(`/api/lists/${selectedListId}/items`, {
+        await fetch(`/api/lists/${selectedListId}/records`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ids: selectedIds,
-            type: entityType,
           }),
         });
       }
@@ -210,7 +214,7 @@ export function SaveToListDialog({
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-3">
             <Button
               variant="outline"
               onClick={() => handleOpenChange(false)}
@@ -251,7 +255,7 @@ export function SaveToListDialog({
             />
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-3">
             <Button
               variant="outline"
               onClick={() => {
