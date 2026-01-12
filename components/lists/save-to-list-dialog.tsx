@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Info, Users, Plus, Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -95,13 +95,7 @@ export function SaveToListDialog({
 
   const recordType = entityType === "companies" ? "company" : "person";
 
-  useEffect(() => {
-    if (open && addToList) {
-      fetchLists();
-    }
-  }, [open, addToList, entityType]);
-
-  const fetchLists = async () => {
+  const fetchLists = useCallback(async () => {
     setIsLoadingLists(true);
     try {
       const response = await fetch(`/api/organizations/${organizationId}/lists?record_type=${recordType}`);
@@ -113,7 +107,13 @@ export function SaveToListDialog({
     } finally {
       setIsLoadingLists(false);
     }
-  };
+  }, [organizationId, recordType]);
+
+  useEffect(() => {
+    if (open) {
+      fetchLists();
+    }
+  }, [open, fetchLists]);
 
   const handleCreateList = async () => {
     if (!newListName.trim()) return;
@@ -157,17 +157,23 @@ export function SaveToListDialog({
         return { record_id: id, values };
       });
 
-      const recordsResponse = await fetch(`/api/organizations/${organizationId}/records`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          record_type: recordType,
-          items,
-        }),
-      });
+      for (const item of items) {
+        const recordsResponse = await fetch(`/api/organizations/${organizationId}/records`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            record_id: item.record_id,
+            record_type: recordType,
+            values: item.values,
+          }),
+        });
 
-      if (!recordsResponse.ok) {
-        return;
+        if (!recordsResponse.ok) {
+          const errorData = await recordsResponse.json();
+          if (recordsResponse.status !== 409 && !errorData?.error?.includes("already exists")) {
+            continue;
+          }
+        }
       }
 
       if (addToList && selectedListId) {
@@ -198,6 +204,7 @@ export function SaveToListDialog({
     setSelectedListId("");
     setShowCreateList(false);
     setNewListName("");
+    setLists([]);
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -208,6 +215,7 @@ export function SaveToListDialog({
   };
 
   const entityLabel = entityType === "companies" ? "companies" : "contacts";
+  const hasLists = lists.length > 0;
 
   return (
     <>
@@ -255,10 +263,18 @@ export function SaveToListDialog({
                   <Select
                     value={selectedListId}
                     onValueChange={setSelectedListId}
-                    disabled={isLoadingLists}
+                    disabled={isLoadingLists || !hasLists}
                   >
                     <SelectTrigger className="flex-1">
-                      <SelectValue placeholder={isLoadingLists ? "Loading..." : "Select..."} />
+                      <SelectValue
+                        placeholder={
+                          isLoadingLists
+                            ? "Loading..."
+                            : hasLists
+                              ? "Select..."
+                              : "No lists available"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {lists.map((list) => (
