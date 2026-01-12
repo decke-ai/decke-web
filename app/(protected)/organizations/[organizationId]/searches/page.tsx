@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useParams } from "next/navigation";
 import { Check, Loader2, Building2, Users, ChevronLeft, ChevronRight, ListPlus, Columns3, MoreVertical, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,6 +66,9 @@ const PEOPLE_COLUMNS: { id: PeopleColumnId; label: string }[] = [
 ];
 
 export default function SearchPage() {
+  const params = useParams();
+  const organizationId = params.organizationId as string;
+
   const [searchMode, setSearchMode] = useState<SearchMode>("companies");
 
   const [companyFilters, setCompanyFilters] = useState<BusinessFilters>({});
@@ -656,6 +660,7 @@ export default function SearchPage() {
         selectedCount={selectedIds.length}
         selectedIds={selectedIds}
         entityType={searchMode}
+        organizationId={organizationId}
         onSaveSuccess={handleSaveSuccess}
       />
     </div>

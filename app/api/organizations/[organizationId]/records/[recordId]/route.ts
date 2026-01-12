@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthToken, getOrganizationId } from "@/lib/api";
+import { getAuthToken } from "@/lib/api";
 
 export const runtime = "nodejs";
 
@@ -7,19 +7,11 @@ const API_URL = process.env.API_URL || "https://api.decke.ai";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ recordId: string }> }
+  { params }: { params: Promise<{ organizationId: string; recordId: string }> }
 ) {
   try {
     const token = await getAuthToken();
-    const { recordId } = await params;
-    const organizationId = await getOrganizationId();
-
-    if (!organizationId) {
-      return NextResponse.json(
-        { error: "Organization not found" },
-        { status: 404 }
-      );
-    }
+    const { organizationId, recordId } = await params;
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -55,19 +47,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ recordId: string }> }
+  { params }: { params: Promise<{ organizationId: string; recordId: string }> }
 ) {
   try {
     const token = await getAuthToken();
-    const { recordId } = await params;
-    const organizationId = await getOrganizationId();
-
-    if (!organizationId) {
-      return NextResponse.json(
-        { error: "Organization not found" },
-        { status: 404 }
-      );
-    }
+    const { organizationId, recordId } = await params;
 
     const body = await request.json();
 
@@ -106,19 +90,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ recordId: string }> }
+  { params }: { params: Promise<{ organizationId: string; recordId: string }> }
 ) {
   try {
     const token = await getAuthToken();
-    const { recordId } = await params;
-    const organizationId = await getOrganizationId();
-
-    if (!organizationId) {
-      return NextResponse.json(
-        { error: "Organization not found" },
-        { status: 404 }
-      );
-    }
+    const { organizationId, recordId } = await params;
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",

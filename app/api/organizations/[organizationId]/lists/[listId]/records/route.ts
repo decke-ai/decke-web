@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthToken, getOrganizationId } from "@/lib/api";
+import { getAuthToken } from "@/lib/api";
 
 export const runtime = "nodejs";
 
@@ -7,19 +7,11 @@ const API_URL = process.env.API_URL || "https://api.decke.ai";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ listId: string }> }
+  { params }: { params: Promise<{ organizationId: string; listId: string }> }
 ) {
   try {
     const token = await getAuthToken();
-    const { listId } = await params;
-    const organizationId = await getOrganizationId();
-
-    if (!organizationId) {
-      return NextResponse.json(
-        { error: "Organization not found" },
-        { status: 404 }
-      );
-    }
+    const { organizationId, listId } = await params;
 
     const body = await request.json();
 

@@ -32,6 +32,7 @@ interface SaveToListDialogProps {
   selectedCount: number;
   selectedIds: string[];
   entityType: "companies" | "people";
+  organizationId: string;
   onSaveSuccess?: () => void;
 }
 
@@ -41,6 +42,7 @@ export function SaveToListDialog({
   selectedCount,
   selectedIds,
   entityType,
+  organizationId,
   onSaveSuccess,
 }: SaveToListDialogProps) {
   const [addToList, setAddToList] = useState(false);
@@ -63,7 +65,7 @@ export function SaveToListDialog({
   const fetchLists = async () => {
     setIsLoadingLists(true);
     try {
-      const response = await fetch(`/api/lists?record_type=${recordType}`);
+      const response = await fetch(`/api/organizations/${organizationId}/lists?record_type=${recordType}`);
       if (response.ok) {
         const data = await response.json();
         setLists(data.content || data.items || []);
@@ -79,7 +81,7 @@ export function SaveToListDialog({
 
     setIsCreatingList(true);
     try {
-      const response = await fetch("/api/lists", {
+      const response = await fetch(`/api/organizations/${organizationId}/lists`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -107,7 +109,7 @@ export function SaveToListDialog({
     setIsSaving(true);
     try {
       if (addToList && selectedListId) {
-        const response = await fetch(`/api/lists/${selectedListId}/records`, {
+        const response = await fetch(`/api/organizations/${organizationId}/lists/${selectedListId}/records`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

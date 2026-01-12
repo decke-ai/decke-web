@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useParams } from "next/navigation";
 import { Loader2, Building2, Users, ChevronLeft, ChevronRight, Columns3, Sparkles, MoreVertical, ListPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -87,6 +88,9 @@ const PEOPLE_COLUMNS: { id: PeopleColumnId; label: string }[] = [
 ];
 
 export default function AISearchPage() {
+  const params = useParams();
+  const organizationId = params.organizationId as string;
+
   const [searchMode, setSearchMode] = useState<SearchMode>("companies");
   const [query, setQuery] = useState("");
 
@@ -715,6 +719,7 @@ export default function AISearchPage() {
         selectedCount={selectedIds.length}
         selectedIds={selectedIds}
         entityType={searchMode}
+        organizationId={organizationId}
         onSaveSuccess={handleSaveSuccess}
       />
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useParams } from "next/navigation";
 import { Search, Columns3, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,6 +81,8 @@ function mapRecordToPerson(record: {
 }
 
 export default function PeoplePage() {
+  const params = useParams();
+  const organizationId = params.organizationId as string;
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [hiddenColumns, setHiddenColumns] = useState<PeopleColumnId[]>([]);
@@ -93,13 +96,13 @@ export default function PeoplePage() {
   const fetchPeople = useCallback(async () => {
     setIsLoading(true);
     try {
-      const params = new URLSearchParams();
-      params.set("record_type", "person");
-      params.set("page_size", "100");
-      params.set("sort_field", "created_date");
-      params.set("sort_direction", "desc");
+      const queryParams = new URLSearchParams();
+      queryParams.set("record_type", "person");
+      queryParams.set("page_size", "100");
+      queryParams.set("sort_field", "created_date");
+      queryParams.set("sort_direction", "desc");
 
-      const response = await fetch(`/api/records?${params.toString()}`);
+      const response = await fetch(`/api/organizations/${organizationId}/records?${queryParams.toString()}`);
       if (response.ok) {
         const data: RecordResponse = await response.json();
         const records = data.content || data.items || [];
@@ -111,7 +114,7 @@ export default function PeoplePage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [organizationId]);
 
   useEffect(() => {
     fetchPeople();

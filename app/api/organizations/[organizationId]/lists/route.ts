@@ -1,29 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthToken, getOrganizationId } from "@/lib/api";
+import { getAuthToken } from "@/lib/api";
 
 export const runtime = "nodejs";
 
 const API_URL = process.env.API_URL || "https://api.decke.ai";
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ organizationId: string }> }
+) {
   try {
     const token = await getAuthToken();
-    const organizationId = await getOrganizationId();
-
-    if (!organizationId) {
-      return NextResponse.json(
-        { error: "Organization not found" },
-        { status: 404 }
-      );
-    }
+    const { organizationId } = await params;
 
     const { searchParams } = new URL(request.url);
     const recordType = searchParams.get("record_type");
 
-    const params = new URLSearchParams();
-    params.set("page_size", "100");
+    const queryParams = new URLSearchParams();
+    queryParams.set("page_size", "100");
     if (recordType) {
-      params.set("record_type", recordType);
+      queryParams.set("record_type", recordType);
     }
 
     const headers: Record<string, string> = {
@@ -33,7 +29,7 @@ export async function GET(request: NextRequest) {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const url = `${API_URL}/organizations/${organizationId}/lists?${params.toString()}`;
+    const url = `${API_URL}/organizations/${organizationId}/lists?${queryParams.toString()}`;
 
     const response = await fetch(url, {
       method: "GET",
@@ -58,17 +54,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ organizationId: string }> }
+) {
   try {
     const token = await getAuthToken();
-    const organizationId = await getOrganizationId();
-
-    if (!organizationId) {
-      return NextResponse.json(
-        { error: "Organization not found" },
-        { status: 404 }
-      );
-    }
+    const { organizationId } = await params;
 
     const body = await request.json();
 
