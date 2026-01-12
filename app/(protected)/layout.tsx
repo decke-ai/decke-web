@@ -26,12 +26,12 @@ const PAGE_PATTERNS: PagePattern[] = [
   { pattern: /^\/organizations\/[^/]+\/records\/companies$/, config: { title: "Companies", icon: Building } },
   { pattern: /^\/organizations\/[^/]+\/records\/people$/, config: { title: "People", icon: Users } },
   { pattern: /^\/organizations\/[^/]+\/searches$/, config: { title: "Searches", icon: Search } },
+  { pattern: /^\/organizations\/[^/]+\/lists(\/.*)?$/, config: { title: "Lists", icon: List } },
   { pattern: /^\/organizations\/[^/]+$/, config: { title: "Organization", icon: Building2 } },
 ];
 
 const PAGE_CONFIG: Record<string, PageConfig> = {
   "/": { title: "Home", icon: Home },
-  "/lists": { title: "Lists", icon: List },
   "/account": { title: "Account", icon: User },
   "/credits": { title: "Credits", icon: Coins },
 };

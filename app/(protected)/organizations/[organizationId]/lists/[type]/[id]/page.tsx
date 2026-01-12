@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, use } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useEffect, useCallback, use } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, Search, Columns3, Loader2, Building2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,211 +45,98 @@ const PEOPLE_COLUMNS: { id: PeopleColumnId; label: string }[] = [
   { id: "skills", label: "Person Skills" },
 ];
 
-interface CompanyListData {
+interface ListData {
   id: string;
   name: string;
-  companies: Business[];
+  record_type: string;
 }
 
-interface PeopleListData {
+interface RecordResponse {
+  content?: Array<{
+    id: string;
+    record_id: string;
+    record_type: string;
+    values: Record<string, unknown>;
+    created_date: string;
+    updated_date: string;
+  }>;
+  items?: Array<{
+    id: string;
+    record_id: string;
+    record_type: string;
+    values: Record<string, unknown>;
+    created_date: string;
+    updated_date: string;
+  }>;
+  total_elements?: number;
+}
+
+function mapRecordToCompany(record: {
   id: string;
-  name: string;
-  people: Person[];
+  record_id: string;
+  values: Record<string, unknown>;
+}): Business {
+  const values = record.values || {};
+  return {
+    id: record.id,
+    business_id: record.record_id,
+    name: (values.name as string) || "",
+    business_description: (values.business_description as string) || (values.description as string) || "",
+    industry: (values.industry as string) || "",
+    number_of_employees_range: (values.number_of_employees_range as string) || (values.employees as string) || "",
+    yearly_revenue_range: (values.yearly_revenue_range as string) || (values.revenue as string) || "",
+    city_name: (values.city_name as string) || (values.city as string) || "",
+    state_region_name: (values.state_region_name as string) || (values.state as string) || "",
+    country_name: (values.country_name as string) || (values.country as string) || "",
+    domain: (values.domain as string) || "",
+    linkedin_company_url: (values.linkedin_company_url as string) || (values.linkedin as string) || "",
+  };
 }
 
-const mockCompanyLists: Record<string, CompanyListData> = {
-  "1": {
-    id: "1",
-    name: "Tech Startups Brazil",
-    companies: [
-      {
-        id: "1",
-        business_id: "biz_001",
-        name: "Nubank",
-        business_description: "Digital bank and financial services company",
-        industry: "Financial Services",
-        number_of_employees_range: "5,001-10,000",
-        yearly_revenue_range: "$1B-$5B",
-        city_name: "São Paulo",
-        state_region_name: "São Paulo",
-        country_name: "Brazil",
-        domain: "nubank.com.br",
-        linkedin_company_url: "https://linkedin.com/company/nubank",
-      },
-      {
-        id: "2",
-        business_id: "biz_002",
-        name: "iFood",
-        business_description: "Food delivery platform",
-        industry: "Technology",
-        number_of_employees_range: "1,001-5,000",
-        yearly_revenue_range: "$500M-$1B",
-        city_name: "São Paulo",
-        state_region_name: "São Paulo",
-        country_name: "Brazil",
-        domain: "ifood.com.br",
-        linkedin_company_url: "https://linkedin.com/company/ifood",
-      },
-      {
-        id: "3",
-        business_id: "biz_003",
-        name: "VTEX",
-        business_description: "Enterprise digital commerce platform",
-        industry: "Software",
-        number_of_employees_range: "1,001-5,000",
-        yearly_revenue_range: "$100M-$500M",
-        city_name: "Rio de Janeiro",
-        state_region_name: "Rio de Janeiro",
-        country_name: "Brazil",
-        domain: "vtex.com",
-        linkedin_company_url: "https://linkedin.com/company/vtex",
-      },
-    ],
-  },
-  "2": {
-    id: "2",
-    name: "Enterprise Clients",
-    companies: [
-      {
-        id: "4",
-        business_id: "biz_004",
-        name: "QuintoAndar",
-        business_description: "Real estate technology platform",
-        industry: "Real Estate Technology",
-        number_of_employees_range: "501-1,000",
-        yearly_revenue_range: "$50M-$100M",
-        city_name: "São Paulo",
-        state_region_name: "São Paulo",
-        country_name: "Brazil",
-        domain: "quintoandar.com.br",
-        linkedin_company_url: "https://linkedin.com/company/quintoandar",
-      },
-      {
-        id: "5",
-        business_id: "biz_005",
-        name: "Loft",
-        business_description: "Proptech company for buying and selling real estate",
-        industry: "Real Estate",
-        number_of_employees_range: "501-1,000",
-        yearly_revenue_range: "$50M-$100M",
-        city_name: "São Paulo",
-        state_region_name: "São Paulo",
-        country_name: "Brazil",
-        domain: "loft.com.br",
-        linkedin_company_url: "https://linkedin.com/company/loftbr",
-      },
-    ],
-  },
-  "3": {
-    id: "3",
-    name: "Fintech Companies",
-    companies: [
-      {
-        id: "1",
-        business_id: "biz_001",
-        name: "Nubank",
-        business_description: "Digital bank and financial services company",
-        industry: "Financial Services",
-        number_of_employees_range: "5,001-10,000",
-        yearly_revenue_range: "$1B-$5B",
-        city_name: "São Paulo",
-        state_region_name: "São Paulo",
-        country_name: "Brazil",
-        domain: "nubank.com.br",
-        linkedin_company_url: "https://linkedin.com/company/nubank",
-      },
-    ],
-  },
-};
-
-const mockPeopleLists: Record<string, PeopleListData> = {
-  "1": {
-    id: "1",
-    name: "Decision Makers",
-    people: [
-      {
-        id: "1",
-        prospect_id: "prospect_001",
-        first_name: "João",
-        last_name: "Silva",
-        full_name: "João Silva",
-        job_title: "CEO",
-        job_level: "C-Level",
-        job_department: "Executive",
-        company_name: "Tech Corp",
-        company_domain: "techcorp.com",
-        company_linkedin_url: "https://linkedin.com/company/techcorp",
-        city: "São Paulo",
-        region: "São Paulo",
-        country_name: "Brazil",
-        linkedin_url: "https://linkedin.com/in/joaosilva",
-        experiences: ["Tech Corp - CEO", "Startup Inc - CTO"],
-        skills: ["Leadership", "Strategy", "Technology"],
-        interests: ["Innovation", "Startups"],
-      },
-      {
-        id: "2",
-        prospect_id: "prospect_002",
-        first_name: "Maria",
-        last_name: "Santos",
-        full_name: "Maria Santos",
-        job_title: "VP of Sales",
-        job_level: "VP",
-        job_department: "Sales",
-        company_name: "Sales Pro",
-        company_domain: "salespro.com",
-        company_linkedin_url: "https://linkedin.com/company/salespro",
-        city: "Rio de Janeiro",
-        region: "Rio de Janeiro",
-        country_name: "Brazil",
-        linkedin_url: "https://linkedin.com/in/mariasantos",
-        experiences: ["Sales Pro - VP Sales", "BigCorp - Sales Director"],
-        skills: ["Sales", "Negotiation", "Team Management"],
-        interests: ["Sales Technology", "CRM"],
-      },
-    ],
-  },
-  "2": {
-    id: "2",
-    name: "HR Directors",
-    people: [
-      {
-        id: "3",
-        prospect_id: "prospect_003",
-        first_name: "Ana",
-        last_name: "Costa",
-        full_name: "Ana Costa",
-        job_title: "HR Director",
-        job_level: "Director",
-        job_department: "Human Resources",
-        company_name: "HR Solutions",
-        company_domain: "hrsolutions.com",
-        company_linkedin_url: "https://linkedin.com/company/hrsolutions",
-        city: "Belo Horizonte",
-        region: "Minas Gerais",
-        country_name: "Brazil",
-        linkedin_url: "https://linkedin.com/in/anacosta",
-        experiences: ["HR Solutions - HR Director", "People Co - HR Manager"],
-        skills: ["HR Management", "Recruiting", "Employee Relations"],
-        interests: ["HR Tech", "Employee Engagement"],
-      },
-    ],
-  },
-};
+function mapRecordToPerson(record: {
+  id: string;
+  record_id: string;
+  values: Record<string, unknown>;
+}): Person {
+  const values = record.values || {};
+  return {
+    id: record.id,
+    prospect_id: record.record_id,
+    first_name: (values.first_name as string) || "",
+    last_name: (values.last_name as string) || "",
+    full_name: (values.full_name as string) || `${values.first_name || ""} ${values.last_name || ""}`.trim(),
+    job_title: (values.job_title as string) || "",
+    company_name: (values.company_name as string) || "",
+    company_domain: (values.company_domain as string) || "",
+    company_linkedin_url: (values.company_linkedin_url as string) || "",
+    city: (values.city as string) || "",
+    region: (values.region as string) || (values.state as string) || "",
+    country_name: (values.country_name as string) || (values.country as string) || "",
+    linkedin_url: (values.linkedin_url as string) || "",
+    skills: (values.skills as string[]) || [],
+    experiences: (values.experiences as string[]) || [],
+    interests: (values.interests as string[]) || [],
+  };
+}
 
 export default function ListDetailPage({
-  params,
+  params: paramsPromise,
 }: {
   params: Promise<{ type: string; id: string }>;
 }) {
   const router = useRouter();
-  const { type, id } = use(params);
+  const routeParams = useParams();
+  const organizationId = routeParams.organizationId as string;
+  const { type, id } = use(paramsPromise);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [hiddenCompanyColumns, setHiddenCompanyColumns] = useState<CompanyColumnId[]>([]);
   const [hiddenPeopleColumns, setHiddenPeopleColumns] = useState<PeopleColumnId[]>([]);
-  const [isLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [listData, setListData] = useState<ListData | null>(null);
+  const [companies, setCompanies] = useState<Business[]>([]);
+  const [people, setPeople] = useState<Person[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Business | null>(null);
   const [isCompanyDrawerOpen, setIsCompanyDrawerOpen] = useState(false);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
@@ -257,7 +144,36 @@ export default function ListDetailPage({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const isCompanyList = type === "companies";
-  const listData = isCompanyList ? mockCompanyLists[id] : mockPeopleLists[id];
+
+  const fetchListData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const listResponse = await fetch(`/api/organizations/${organizationId}/lists/${id}`);
+      if (listResponse.ok) {
+        const list = await listResponse.json();
+        setListData(list);
+      }
+
+      const recordsResponse = await fetch(`/api/organizations/${organizationId}/lists/${id}/records`);
+      if (recordsResponse.ok) {
+        const data: RecordResponse = await recordsResponse.json();
+        const records = data.content || data.items || [];
+
+        if (isCompanyList) {
+          setCompanies(records.map(mapRecordToCompany));
+        } else {
+          setPeople(records.map(mapRecordToPerson));
+        }
+      }
+    } catch {
+    } finally {
+      setIsLoading(false);
+    }
+  }, [organizationId, id, isCompanyList]);
+
+  useEffect(() => {
+    fetchListData();
+  }, [fetchListData]);
 
   const handleCompanyClick = (company: Business) => {
     setSelectedCompany(company);
@@ -285,9 +201,6 @@ export default function ListDetailPage({
     );
   };
 
-  const companies = isCompanyList && listData ? (listData as CompanyListData).companies : [];
-  const people = !isCompanyList && listData ? (listData as PeopleListData).people : [];
-
   const filteredCompanies = companies.filter((company) =>
     company.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     company.domain?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -300,7 +213,7 @@ export default function ListDetailPage({
     person.job_title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (!listData) {
+  if (!isLoading && !listData) {
     return (
       <div className="flex h-full items-center justify-center">
         <p className="text-muted-foreground">List not found</p>
@@ -318,7 +231,7 @@ export default function ListDetailPage({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => router.push("/lists")}
+            onClick={() => router.push(`/organizations/${organizationId}/lists`)}
             className="h-9 w-9"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -330,7 +243,7 @@ export default function ListDetailPage({
             ) : (
               <Users className="h-5 w-5 text-muted-foreground" />
             )}
-            <h2 className="text-lg font-semibold">{listData.name}</h2>
+            <h2 className="text-lg font-semibold">{listData?.name || "Loading..."}</h2>
           </div>
 
           <span className="text-sm text-muted-foreground border rounded-lg px-3 h-9 flex items-center">
@@ -405,7 +318,7 @@ export default function ListDetailPage({
           className="flex-1 overflow-auto"
         >
           {isCompanyList ? (
-            filteredCompanies.length === 0 ? (
+            filteredCompanies.length === 0 && !isLoading ? (
               <div className="flex items-center justify-center h-full text-muted-foreground">
                 No companies found
               </div>
@@ -419,7 +332,7 @@ export default function ListDetailPage({
               />
             )
           ) : (
-            filteredPeople.length === 0 ? (
+            filteredPeople.length === 0 && !isLoading ? (
               <div className="flex items-center justify-center h-full text-muted-foreground">
                 No people found
               </div>

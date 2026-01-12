@@ -13,14 +13,6 @@ export async function GET(
     const token = await getAuthToken();
     const { organizationId, listId } = await params;
 
-    const { searchParams } = new URL(request.url);
-    const pageNumber = searchParams.get("page_number") || "0";
-    const pageSize = searchParams.get("page_size") || "100";
-
-    const queryParams = new URLSearchParams();
-    queryParams.set("page_number", pageNumber);
-    queryParams.set("page_size", pageSize);
-
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
@@ -28,7 +20,7 @@ export async function GET(
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const url = `${API_URL}/organizations/${organizationId}/lists/${listId}/records?${queryParams.toString()}`;
+    const url = `${API_URL}/organizations/${organizationId}/lists/${listId}`;
 
     const response = await fetch(url, {
       method: "GET",
@@ -47,26 +39,19 @@ export async function GET(
     return NextResponse.json(data);
   } catch {
     return NextResponse.json(
-      { error: "Failed to fetch list records" },
+      { error: "Failed to fetch list" },
       { status: 500 }
     );
   }
 }
 
-export async function POST(
+export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ organizationId: string; listId: string }> }
 ) {
   try {
     const token = await getAuthToken();
     const { organizationId, listId } = await params;
-
-    const body = await request.json();
-
-    const items = body.ids.map((id: string) => ({
-      record_id: id,
-      values: body.values?.[id] || {},
-    }));
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -75,12 +60,11 @@ export async function POST(
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const url = `${API_URL}/organizations/${organizationId}/lists/${listId}/records`;
+    const url = `${API_URL}/organizations/${organizationId}/lists/${listId}`;
 
     const response = await fetch(url, {
-      method: "POST",
+      method: "DELETE",
       headers,
-      body: JSON.stringify({ items }),
     });
 
     if (!response.ok) {
@@ -91,11 +75,10 @@ export async function POST(
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    return new NextResponse(null, { status: 204 });
   } catch {
     return NextResponse.json(
-      { error: "Failed to add items to list" },
+      { error: "Failed to delete list" },
       { status: 500 }
     );
   }

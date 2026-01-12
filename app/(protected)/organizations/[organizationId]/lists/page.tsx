@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Building2, Users, Search, Plus, Upload, FileSpreadsheet, ExternalLink, MoreHorizontal, Trash2, User } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { Building2, Users, Search, Plus, Upload, FileSpreadsheet, ExternalLink, MoreHorizontal, Trash2, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,60 +27,49 @@ type ListMode = "companies" | "people";
 interface ListItem {
   id: string;
   name: string;
-  createdAt: Date;
-  updatedAt: Date;
-  owner: {
+  record_type: string;
+  created_date: string;
+  updated_date: string;
+  owner?: {
     name: string;
     picture?: string;
   };
 }
 
-// Mock data for demonstration
-const mockCompanyLists: ListItem[] = [
-  {
-    id: "1",
-    name: "Tech Startups Brazil",
-    createdAt: new Date("2024-01-15"),
-    updatedAt: new Date("2024-03-20"),
-    owner: { name: "John Doe", picture: undefined },
-  },
-  {
-    id: "2",
-    name: "Enterprise Clients",
-    createdAt: new Date("2024-02-10"),
-    updatedAt: new Date("2024-03-18"),
-    owner: { name: "Jane Smith", picture: undefined },
-  },
-  {
-    id: "3",
-    name: "Fintech Companies",
-    createdAt: new Date("2024-03-01"),
-    updatedAt: new Date("2024-03-25"),
-    owner: { name: "Carlos Silva", picture: undefined },
-  },
-];
-
-const mockPeopleLists: ListItem[] = [
-  {
-    id: "1",
-    name: "Decision Makers",
-    createdAt: new Date("2024-01-20"),
-    updatedAt: new Date("2024-03-22"),
-    owner: { name: "John Doe", picture: undefined },
-  },
-  {
-    id: "2",
-    name: "HR Directors",
-    createdAt: new Date("2024-02-15"),
-    updatedAt: new Date("2024-03-19"),
-    owner: { name: "Jane Smith", picture: undefined },
-  },
-];
+interface ListResponse {
+  content?: ListItem[];
+  items?: ListItem[];
+  total_elements?: number;
+}
 
 export default function ListsPage() {
   const router = useRouter();
+  const params = useParams();
+  const organizationId = params.organizationId as string;
   const [listMode, setListMode] = useState<ListMode>("companies");
   const [searchQuery, setSearchQuery] = useState("");
+  const [lists, setLists] = useState<ListItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const recordType = listMode === "companies" ? "company" : "person";
+
+  const fetchLists = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/organizations/${organizationId}/lists?record_type=${recordType}`);
+      if (response.ok) {
+        const data: ListResponse = await response.json();
+        setLists(data.content || data.items || []);
+      }
+    } catch {
+    } finally {
+      setIsLoading(false);
+    }
+  }, [organizationId, recordType]);
+
+  useEffect(() => {
+    fetchLists();
+  }, [fetchLists]);
 
   const handleModeChange = (mode: ListMode) => {
     if (mode === listMode) return;
@@ -89,22 +78,28 @@ export default function ListsPage() {
   };
 
   const handleImportCSV = () => {
-    console.log("Import from CSV");
   };
 
   const handleImportLinkedIn = () => {
-    console.log("Import from LinkedIn");
   };
 
   const handleNewList = () => {
-    console.log("Create new list");
   };
 
-  const handleDeleteList = (listId: string) => {
-    console.log("Delete list", listId);
+  const handleDeleteList = async (listId: string) => {
+    try {
+      const response = await fetch(`/api/organizations/${organizationId}/lists/${listId}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        fetchLists();
+      }
+    } catch {
+    }
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
     return date.toLocaleDateString("pt-BR", {
       day: "2-digit",
       month: "2-digit",
@@ -112,7 +107,6 @@ export default function ListsPage() {
     });
   };
 
-  const lists = listMode === "companies" ? mockCompanyLists : mockPeopleLists;
   const filteredLists = lists.filter((list) =>
     list.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -185,7 +179,12 @@ export default function ListsPage() {
           </div>
         </div>
 
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border rounded-lg overflow-hidden relative">
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          )}
           <Table>
             <TableHeader>
               <TableRow>
@@ -197,7 +196,7 @@ export default function ListsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredLists.length === 0 ? (
+              {filteredLists.length === 0 && !isLoading ? (
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                     No lists found
@@ -208,14 +207,14 @@ export default function ListsPage() {
                   <TableRow
                     key={list.id}
                     className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => router.push(`/lists/${listMode}/${list.id}`)}
+                    onClick={() => router.push(`/organizations/${organizationId}/lists/${listMode}/${list.id}`)}
                   >
                     <TableCell className="font-medium">{list.name}</TableCell>
-                    <TableCell>{formatDate(list.createdAt)}</TableCell>
-                    <TableCell>{formatDate(list.updatedAt)}</TableCell>
+                    <TableCell>{formatDate(list.created_date)}</TableCell>
+                    <TableCell>{formatDate(list.updated_date)}</TableCell>
                     <TableCell>
                       <Avatar className="h-8 w-8">
-                        {list.owner.picture && (
+                        {list.owner?.picture && (
                           <AvatarImage src={list.owner.picture} alt={list.owner.name} />
                         )}
                         <AvatarFallback className="bg-muted">
