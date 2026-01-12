@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthToken } from "@/lib/api";
+import { getAuthToken, getOrganizationId } from "@/lib/api";
 
 export const runtime = "nodejs";
 
@@ -12,11 +12,20 @@ export async function POST(
   try {
     const token = await getAuthToken();
     const { listId } = await params;
-    const organizationId = crypto.randomUUID();
+    const organizationId = await getOrganizationId();
+
+    if (!organizationId) {
+      return NextResponse.json(
+        { error: "Organization not found" },
+        { status: 404 }
+      );
+    }
+
     const body = await request.json();
 
     const items = body.ids.map((id: string) => ({
       record_id: id,
+      values: body.values?.[id] || {},
     }));
 
     const headers: Record<string, string> = {
@@ -26,14 +35,13 @@ export async function POST(
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const response = await fetch(
-      `${API_URL}/organizations/${organizationId}/lists/${listId}/records`,
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ items }),
-      }
-    );
+    const url = `${API_URL}/organizations/${organizationId}/lists/${listId}/records`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ items }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -45,8 +53,7 @@ export async function POST(
 
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("Add to list error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Failed to add items to list" },
       { status: 500 }

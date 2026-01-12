@@ -66,10 +66,9 @@ export function SaveToListDialog({
       const response = await fetch(`/api/lists?record_type=${recordType}`);
       if (response.ok) {
         const data = await response.json();
-        setLists(data.content || []);
+        setLists(data.content || data.items || []);
       }
-    } catch (error) {
-      console.error("Error fetching lists:", error);
+    } catch {
     } finally {
       setIsLoadingLists(false);
     }
@@ -89,15 +88,16 @@ export function SaveToListDialog({
         }),
       });
 
-      if (response.ok) {
-        const newList = await response.json();
-        setLists((prev) => [...prev, newList]);
-        setSelectedListId(newList.id);
-        setNewListName("");
-        setShowCreateList(false);
+      if (!response.ok) {
+        return;
       }
-    } catch (error) {
-      console.error("Error creating list:", error);
+
+      const newList = await response.json();
+      setLists((prev) => [...prev, newList]);
+      setSelectedListId(newList.id);
+      setNewListName("");
+      setShowCreateList(false);
+    } catch {
     } finally {
       setIsCreatingList(false);
     }
@@ -107,20 +107,23 @@ export function SaveToListDialog({
     setIsSaving(true);
     try {
       if (addToList && selectedListId) {
-        await fetch(`/api/lists/${selectedListId}/records`, {
+        const response = await fetch(`/api/lists/${selectedListId}/records`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ids: selectedIds,
           }),
         });
+
+        if (!response.ok) {
+          return;
+        }
       }
 
       onSaveSuccess?.();
       onOpenChange(false);
       resetState();
-    } catch (error) {
-      console.error("Error saving:", error);
+    } catch {
     } finally {
       setIsSaving(false);
     }

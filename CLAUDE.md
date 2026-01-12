@@ -46,6 +46,7 @@ Next.js 16 application using the App Router pattern with React 19.
 - Do NOT add inline comments in the code
 - Only use JSDoc/docstrings for public APIs and complex functions when necessary
 - Code should be self-documenting through clear naming
+- NEVER commit code with console.log statements
 
 **Environment Variables:**
 - `AUTH0_SECRET` - A long secret value used to encrypt the session cookie (min 32 chars)

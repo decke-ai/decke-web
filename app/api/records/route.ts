@@ -19,9 +19,16 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const recordType = searchParams.get("record_type");
+    const pageNumber = searchParams.get("page_number") || "0";
+    const pageSize = searchParams.get("page_size") || "20";
+    const sortField = searchParams.get("sort_field") || "created_date";
+    const sortDirection = searchParams.get("sort_direction") || "desc";
 
     const params = new URLSearchParams();
-    params.set("page_size", "100");
+    params.set("page_number", pageNumber);
+    params.set("page_size", pageSize);
+    params.set("sort_field", sortField);
+    params.set("sort_direction", sortDirection);
     if (recordType) {
       params.set("record_type", recordType);
     }
@@ -33,7 +40,7 @@ export async function GET(request: NextRequest) {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const url = `${API_URL}/organizations/${organizationId}/lists?${params.toString()}`;
+    const url = `${API_URL}/organizations/${organizationId}/records?${params.toString()}`;
 
     const response = await fetch(url, {
       method: "GET",
@@ -52,7 +59,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data);
   } catch {
     return NextResponse.json(
-      { error: "Failed to fetch lists" },
+      { error: "Failed to fetch records" },
       { status: 500 }
     );
   }
@@ -79,7 +86,7 @@ export async function POST(request: NextRequest) {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const url = `${API_URL}/organizations/${organizationId}/lists`;
+    const url = `${API_URL}/organizations/${organizationId}/records`;
 
     const response = await fetch(url, {
       method: "POST",
@@ -96,10 +103,10 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data, { status: 201 });
   } catch {
     return NextResponse.json(
-      { error: "Failed to create list" },
+      { error: "Failed to create record" },
       { status: 500 }
     );
   }

@@ -565,7 +565,7 @@ export default function SearchPage() {
 
           <div className="flex-1 min-h-0 border rounded-lg overflow-hidden flex flex-col relative">
             {isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+              <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-50">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             )}

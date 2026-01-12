@@ -18,6 +18,45 @@ export async function getAuthToken(): Promise<string | null> {
   }
 }
 
+export async function getOrganizationId(): Promise<string | null> {
+  try {
+    const session = await auth0.getSession();
+    if (!session?.user?.email) {
+      return null;
+    }
+
+    const token = await getAuthToken();
+    const domain = session.user.email.split("@")[1];
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(
+      `${API_URL}/organizations?domain=${encodeURIComponent(domain)}`,
+      { method: "GET", headers }
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    const organizations = data.content || data.items || [];
+
+    if (organizations.length > 0) {
+      return organizations[0].id;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 class ApiError extends Error {
   constructor(
     public status: number,

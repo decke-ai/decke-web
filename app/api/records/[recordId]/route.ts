@@ -5,9 +5,13 @@ export const runtime = "nodejs";
 
 const API_URL = process.env.API_URL || "https://api.decke.ai";
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ recordId: string }> }
+) {
   try {
     const token = await getAuthToken();
+    const { recordId } = await params;
     const organizationId = await getOrganizationId();
 
     if (!organizationId) {
@@ -17,15 +21,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { searchParams } = new URL(request.url);
-    const recordType = searchParams.get("record_type");
-
-    const params = new URLSearchParams();
-    params.set("page_size", "100");
-    if (recordType) {
-      params.set("record_type", recordType);
-    }
-
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
@@ -33,7 +28,7 @@ export async function GET(request: NextRequest) {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const url = `${API_URL}/organizations/${organizationId}/lists?${params.toString()}`;
+    const url = `${API_URL}/organizations/${organizationId}/records/${recordId}`;
 
     const response = await fetch(url, {
       method: "GET",
@@ -52,15 +47,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data);
   } catch {
     return NextResponse.json(
-      { error: "Failed to fetch lists" },
+      { error: "Failed to fetch record" },
       { status: 500 }
     );
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ recordId: string }> }
+) {
   try {
     const token = await getAuthToken();
+    const { recordId } = await params;
     const organizationId = await getOrganizationId();
 
     if (!organizationId) {
@@ -79,10 +78,10 @@ export async function POST(request: NextRequest) {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const url = `${API_URL}/organizations/${organizationId}/lists`;
+    const url = `${API_URL}/organizations/${organizationId}/records/${recordId}`;
 
     const response = await fetch(url, {
-      method: "POST",
+      method: "PUT",
       headers,
       body: JSON.stringify(body),
     });
@@ -99,7 +98,54 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data);
   } catch {
     return NextResponse.json(
-      { error: "Failed to create list" },
+      { error: "Failed to update record" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ recordId: string }> }
+) {
+  try {
+    const token = await getAuthToken();
+    const { recordId } = await params;
+    const organizationId = await getOrganizationId();
+
+    if (!organizationId) {
+      return NextResponse.json(
+        { error: "Organization not found" },
+        { status: 404 }
+      );
+    }
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const url = `${API_URL}/organizations/${organizationId}/records/${recordId}`;
+
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return NextResponse.json(
+        { error: errorText },
+        { status: response.status }
+      );
+    }
+
+    return new NextResponse(null, { status: 204 });
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to delete record" },
       { status: 500 }
     );
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Search, Columns3, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,29 @@ import { CompanyTable } from "@/components/companies/company-table";
 import { CompanyDrawer } from "@/components/companies/company-drawer";
 import { Business } from "@/lib/explorium/types";
 
+interface RecordResponse {
+  content?: Array<{
+    id: string;
+    record_id: string;
+    record_type: string;
+    values: Record<string, unknown>;
+    created_date: string;
+    updated_date: string;
+  }>;
+  items?: Array<{
+    id: string;
+    record_id: string;
+    record_type: string;
+    values: Record<string, unknown>;
+    created_date: string;
+    updated_date: string;
+  }>;
+  total_elements?: number;
+  total_pages?: number;
+  page_number?: number;
+  page_size?: number;
+}
+
 type CompanyColumnId = "name" | "description" | "industry" | "employees" | "revenue" | "location" | "domain" | "linkedin";
 
 const COMPANY_COLUMNS: { id: CompanyColumnId; label: string }[] = [
@@ -28,88 +51,65 @@ const COMPANY_COLUMNS: { id: CompanyColumnId; label: string }[] = [
   { id: "revenue", label: "Company Revenue" },
 ];
 
-// Mock data representing deduplicated companies from all lists
-const mockCompanies: Business[] = [
-  {
-    id: "1",
-    business_id: "biz_001",
-    name: "Nubank",
-    business_description: "Digital bank and financial services company",
-    industry: "Financial Services",
-    number_of_employees_range: "5,001-10,000",
-    yearly_revenue_range: "$1B-$5B",
-    city_name: "São Paulo",
-    state_region_name: "São Paulo",
-    country_name: "Brazil",
-    domain: "nubank.com.br",
-    linkedin_company_url: "https://linkedin.com/company/nubank",
-  },
-  {
-    id: "2",
-    business_id: "biz_002",
-    name: "iFood",
-    business_description: "Food delivery platform",
-    industry: "Technology",
-    number_of_employees_range: "1,001-5,000",
-    yearly_revenue_range: "$500M-$1B",
-    city_name: "São Paulo",
-    state_region_name: "São Paulo",
-    country_name: "Brazil",
-    domain: "ifood.com.br",
-    linkedin_company_url: "https://linkedin.com/company/ifood",
-  },
-  {
-    id: "3",
-    business_id: "biz_003",
-    name: "VTEX",
-    business_description: "Enterprise digital commerce platform",
-    industry: "Software",
-    number_of_employees_range: "1,001-5,000",
-    yearly_revenue_range: "$100M-$500M",
-    city_name: "Rio de Janeiro",
-    state_region_name: "Rio de Janeiro",
-    country_name: "Brazil",
-    domain: "vtex.com",
-    linkedin_company_url: "https://linkedin.com/company/vtex",
-  },
-  {
-    id: "4",
-    business_id: "biz_004",
-    name: "QuintoAndar",
-    business_description: "Real estate technology platform",
-    industry: "Real Estate Technology",
-    number_of_employees_range: "501-1,000",
-    yearly_revenue_range: "$50M-$100M",
-    city_name: "São Paulo",
-    state_region_name: "São Paulo",
-    country_name: "Brazil",
-    domain: "quintoandar.com.br",
-    linkedin_company_url: "https://linkedin.com/company/quintoandar",
-  },
-  {
-    id: "5",
-    business_id: "biz_005",
-    name: "Loft",
-    business_description: "Proptech company for buying and selling real estate",
-    industry: "Real Estate",
-    number_of_employees_range: "501-1,000",
-    yearly_revenue_range: "$50M-$100M",
-    city_name: "São Paulo",
-    state_region_name: "São Paulo",
-    country_name: "Brazil",
-    domain: "loft.com.br",
-    linkedin_company_url: "https://linkedin.com/company/loftbr",
-  },
-];
+function mapRecordToCompany(record: {
+  id: string;
+  record_id: string;
+  values: Record<string, unknown>;
+}): Business {
+  const values = record.values || {};
+  return {
+    id: record.id,
+    business_id: record.record_id,
+    name: (values.name as string) || "",
+    business_description: (values.business_description as string) || (values.description as string) || "",
+    industry: (values.industry as string) || "",
+    number_of_employees_range: (values.number_of_employees_range as string) || (values.employees as string) || "",
+    yearly_revenue_range: (values.yearly_revenue_range as string) || (values.revenue as string) || "",
+    city_name: (values.city_name as string) || (values.city as string) || "",
+    state_region_name: (values.state_region_name as string) || (values.state as string) || "",
+    country_name: (values.country_name as string) || (values.country as string) || "",
+    domain: (values.domain as string) || "",
+    linkedin_company_url: (values.linkedin_company_url as string) || (values.linkedin as string) || "",
+  };
+}
 
 export default function CompaniesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [hiddenColumns, setHiddenColumns] = useState<CompanyColumnId[]>([]);
-  const [isLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [companies, setCompanies] = useState<Business[]>([]);
+  const [totalElements, setTotalElements] = useState(0);
   const [selectedCompany, setSelectedCompany] = useState<Business | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const fetchCompanies = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set("record_type", "company");
+      params.set("page_size", "100");
+      params.set("sort_field", "created_date");
+      params.set("sort_direction", "desc");
+
+      const response = await fetch(`/api/records?${params.toString()}`);
+      if (response.ok) {
+        const data: RecordResponse = await response.json();
+        const records = data.content || data.items || [];
+        const mappedCompanies = records.map(mapRecordToCompany);
+        setCompanies(mappedCompanies);
+        setTotalElements(data.total_elements || records.length);
+      }
+    } catch {
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCompanies();
+  }, [fetchCompanies]);
 
   const handleCompanyClick = (company: Business) => {
     setSelectedCompany(company);
@@ -124,8 +124,7 @@ export default function CompaniesPage() {
     );
   };
 
-  // Filter companies by search query
-  const filteredCompanies = mockCompanies.filter((company) =>
+  const filteredCompanies = companies.filter((company) =>
     company.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     company.domain?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     company.industry?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -136,7 +135,7 @@ export default function CompaniesPage() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground border rounded-lg px-3 h-9 flex items-center">
-            {filteredCompanies.length.toLocaleString("pt-BR")} companies
+            {(searchQuery ? filteredCompanies.length : totalElements).toLocaleString("pt-BR")} companies
           </span>
           {selectedIds.length > 0 && (
             <span className="text-sm text-muted-foreground border rounded-lg px-3 h-9 flex items-center">
@@ -184,7 +183,7 @@ export default function CompaniesPage() {
 
       <div className="flex-1 min-h-0 border rounded-lg overflow-hidden flex flex-col relative">
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-50">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         )}
