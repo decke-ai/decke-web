@@ -63,10 +63,20 @@ export async function POST(
 
     const body = await request.json();
 
-    const items = body.ids.map((id: string) => ({
-      record_id: id,
-      values: body.values?.[id] || {},
-    }));
+    let items: Array<{ record_id: string; values: Record<string, unknown> }>;
+    if (body.items) {
+      items = body.items;
+    } else if (body.ids) {
+      items = body.ids.map((id: string) => ({
+        record_id: id,
+        values: body.values?.[id] || {},
+      }));
+    } else {
+      return NextResponse.json(
+        { error: "Either 'items' or 'ids' must be provided" },
+        { status: 400 }
+      );
+    }
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",

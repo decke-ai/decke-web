@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Business, Person } from "@/lib/explorium/types";
 
 interface List {
   id: string;
@@ -31,9 +32,46 @@ interface SaveToListDialogProps {
   onOpenChange: (open: boolean) => void;
   selectedCount: number;
   selectedIds: string[];
+  selectedItems: Business[] | Person[];
   entityType: "companies" | "people";
   organizationId: string;
   onSaveSuccess?: () => void;
+}
+
+function mapCompanyToValues(company: Business): Record<string, unknown> {
+  return {
+    name: company.name,
+    domain: company.domain,
+    business_description: company.business_description || company.description,
+    industry: company.industry,
+    number_of_employees_range: company.number_of_employees_range || company.employee_range,
+    yearly_revenue_range: company.yearly_revenue_range || company.revenue_range,
+    city_name: company.city_name || company.address?.city,
+    state_region_name: company.state_region_name || company.address?.state,
+    country_name: company.country_name || company.address?.country,
+    linkedin_company_url: company.linkedin_company_url || company.linkedin_url,
+  };
+}
+
+function mapPersonToValues(person: Person): Record<string, unknown> {
+  return {
+    first_name: person.first_name,
+    last_name: person.last_name,
+    full_name: person.full_name,
+    job_title: person.job_title,
+    job_level: person.job_level,
+    job_department: person.job_department,
+    company_name: person.company_name,
+    company_domain: person.company_domain,
+    company_linkedin_url: person.company_linkedin_url,
+    city: person.city,
+    region: person.region,
+    country_name: person.country_name || person.country,
+    linkedin_url: person.linkedin_url,
+    skills: person.skills,
+    experiences: person.experiences,
+    interests: person.interests,
+  };
 }
 
 export function SaveToListDialog({
@@ -41,6 +79,7 @@ export function SaveToListDialog({
   onOpenChange,
   selectedCount,
   selectedIds,
+  selectedItems,
   entityType,
   organizationId,
   onSaveSuccess,
@@ -108,12 +147,35 @@ export function SaveToListDialog({
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      const items = selectedItems.map((item) => {
+        const id = entityType === "companies"
+          ? (item as Business).business_id || (item as Business).id
+          : (item as Person).prospect_id || (item as Person).id;
+        const values = entityType === "companies"
+          ? mapCompanyToValues(item as Business)
+          : mapPersonToValues(item as Person);
+        return { record_id: id, values };
+      });
+
+      const recordsResponse = await fetch(`/api/organizations/${organizationId}/records`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          record_type: recordType,
+          items,
+        }),
+      });
+
+      if (!recordsResponse.ok) {
+        return;
+      }
+
       if (addToList && selectedListId) {
         const response = await fetch(`/api/organizations/${organizationId}/lists/${selectedListId}/records`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            ids: selectedIds,
+            items,
           }),
         });
 

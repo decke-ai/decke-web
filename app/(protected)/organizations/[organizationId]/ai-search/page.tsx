@@ -718,6 +718,11 @@ export default function AISearchPage() {
         onOpenChange={setIsSaveDialogOpen}
         selectedCount={selectedIds.length}
         selectedIds={selectedIds}
+        selectedItems={
+          searchMode === "companies"
+            ? companies.filter((c) => selectedIds.includes(c.business_id || c.id || ""))
+            : people.filter((p) => selectedIds.includes(p.prospect_id || p.id || ""))
+        }
         entityType={searchMode}
         organizationId={organizationId}
         onSaveSuccess={handleSaveSuccess}
