@@ -58,35 +58,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkUserInBackend = useCallback(async () => {
     setIsCheckingBackend(true);
     try {
-      console.log("=== checkUserInBackend START ===");
       const response = await fetch("/api/authentication/me");
-      console.log("Response status:", response.status);
       const data = await response.json();
 
-      console.log("=== checkUserInBackend RESPONSE ===");
-      console.log("Raw data:", JSON.stringify(data, null, 2));
-
       if (data.exists && data.organization) {
-        console.log("Setting organization:", data.organization.id, data.organization.name);
         setOrganization(data.organization);
 
         if (data.user) {
-          console.log("Setting backendUser:", data.user.id, "onboarding:", data.user.onboarding);
           setBackendUser(data.user);
           setNeedsOnboarding(!data.user.onboarding);
         } else {
-          console.log("User NOT found in organization - setting needsOnboarding=true");
           setBackendUser(null);
           setNeedsOnboarding(true);
         }
       } else {
-        console.log("Organization NOT found - exists:", data.exists, "org:", data.organization);
         setOrganization(null);
         setBackendUser(null);
         setNeedsOnboarding(true);
       }
-    } catch (error) {
-      console.error("checkUserInBackend error:", error);
+    } catch {
       setOrganization(null);
       setBackendUser(null);
       setNeedsOnboarding(true);
@@ -96,13 +86,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const loadUser = useCallback(async () => {
-    console.log("=== loadUser START ===");
     try {
       const response = await fetch("/auth/me");
-      console.log("/auth/me response status:", response.status);
       if (response.ok) {
         const session = await response.json();
-        console.log("/auth/me session:", JSON.stringify(session, null, 2));
         if (session?.user) {
           const userData = {
             id: session.user.sub,
@@ -110,12 +97,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             name: session.user.name,
             picture: session.user.picture,
           };
-          console.log("Setting user:", userData.email);
           setUser(userData);
 
-          console.log("About to call checkUserInBackend...");
           await checkUserInBackend();
-          console.log("checkUserInBackend completed");
 
           if (!hasTrackedSignIn.current) {
             hasTrackedSignIn.current = true;
@@ -155,17 +139,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     loadUser();
   }, [loadUser]);
-
-  useEffect(() => {
-    console.log("=== Auth State Changed ===");
-    console.log("isLoading:", isLoading);
-    console.log("isCheckingBackend:", isCheckingBackend);
-    console.log("isAuthenticated:", !!user);
-    console.log("user:", user);
-    console.log("organization:", organization);
-    console.log("backendUser:", backendUser);
-    console.log("needsOnboarding:", needsOnboarding);
-  }, [isLoading, isCheckingBackend, user, organization, backendUser, needsOnboarding]);
 
   return (
     <AuthContext.Provider

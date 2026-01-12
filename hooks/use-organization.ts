@@ -1,13 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useAuth } from "@/contexts/auth-context";
 
 export function useOrganization() {
-  const organizationId = useMemo(() => {
-    return "default";
-  }, []);
+  const { organization } = useAuth();
 
   return {
-    organizationId,
+    organizationId: organization?.id || null,
+    organization,
   };
 }
