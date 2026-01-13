@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, use } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Search, Columns3, Loader2, Building2, Users } from "lucide-react";
+import { ArrowLeft, Search, Columns3, Loader2, Building2, Users, MoreVertical, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -12,6 +12,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { CompanyTable } from "@/components/companies/company-table";
 import { CompanyDrawer } from "@/components/companies/company-drawer";
 import { PeopleTable } from "@/components/people/people-table";
@@ -141,6 +151,8 @@ export default function ListDetailPage({
   const [isCompanyDrawerOpen, setIsCompanyDrawerOpen] = useState(false);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [isPersonDrawerOpen, setIsPersonDrawerOpen] = useState(false);
+  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const isCompanyList = type === "companies";
@@ -183,6 +195,48 @@ export default function ListDetailPage({
   const handlePersonClick = (person: Person) => {
     setSelectedPerson(person);
     setIsPersonDrawerOpen(true);
+  };
+
+  const handleRemoveSelected = async () => {
+    setIsRemoving(true);
+    try {
+      const recordIdsToRemove = selectedIds.map((selectedId) => {
+        if (isCompanyList) {
+          const company = companies.find(
+            (c) => c.business_id === selectedId || c.id === selectedId
+          );
+          return company?.id;
+        } else {
+          const person = people.find(
+            (p) => p.prospect_id === selectedId || p.id === selectedId
+          );
+          return person?.id;
+        }
+      }).filter((id): id is string => !!id);
+
+      for (const recordId of recordIdsToRemove) {
+        await fetch(
+          `/api/organizations/${organizationId}/lists/${id}/records/${recordId}`,
+          { method: "DELETE" }
+        );
+      }
+
+      if (isCompanyList) {
+        setCompanies((prev) =>
+          prev.filter((c) => !selectedIds.includes(c.business_id || c.id || ""))
+        );
+      } else {
+        setPeople((prev) =>
+          prev.filter((p) => !selectedIds.includes(p.prospect_id || p.id || ""))
+        );
+      }
+
+      setSelectedIds([]);
+      setIsRemoveDialogOpen(false);
+    } catch {
+    } finally {
+      setIsRemoving(false);
+    }
   };
 
   const toggleCompanyColumn = (columnId: CompanyColumnId) => {
@@ -250,9 +304,20 @@ export default function ListDetailPage({
             {totalItems.toLocaleString("pt-BR")} {entityLabel}
           </span>
           {selectedIds.length > 0 && (
-            <span className="text-sm text-muted-foreground border rounded-lg px-3 h-9 flex items-center">
-              {selectedIds.length} selected
-            </span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="h-9 gap-2">
+                  {selectedIds.length} selected
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => setIsRemoveDialogOpen(true)}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Remove
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
 
@@ -360,6 +425,32 @@ export default function ListDetailPage({
         open={isPersonDrawerOpen}
         onOpenChange={setIsPersonDrawerOpen}
       />
+
+      <AlertDialog open={isRemoveDialogOpen} onOpenChange={setIsRemoveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove from list</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove {selectedIds.length} {selectedIds.length === 1 ? (isCompanyList ? "company" : "person") : entityLabel} from this list? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRemoving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemoveSelected}
+              disabled={isRemoving}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              {isRemoving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

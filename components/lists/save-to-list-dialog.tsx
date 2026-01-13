@@ -154,7 +154,7 @@ export function SaveToListDialog({
         const values = entityType === "companies"
           ? mapCompanyToValues(item as Business)
           : mapPersonToValues(item as Person);
-        return { record_id: id, values };
+        return { id, values };
       });
 
       for (const item of items) {
@@ -162,7 +162,7 @@ export function SaveToListDialog({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            record_id: item.record_id,
+            id: item.id,
             record_type: recordType,
             values: item.values,
           }),
@@ -181,7 +181,10 @@ export function SaveToListDialog({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            items,
+            items: items.map((item) => ({
+              id: item.id,
+              values: item.values,
+            })),
           }),
         });
 

@@ -30,16 +30,24 @@ interface ListItem {
   record_type: string;
   created_date: string;
   updated_date: string;
-  owner?: {
-    name: string;
-    picture?: string;
-  };
+  created_user_id?: string;
 }
 
 interface ListResponse {
   content?: ListItem[];
   items?: ListItem[];
   total_elements?: number;
+}
+
+interface UserItem {
+  id: string;
+  name?: string;
+  avatar?: string;
+}
+
+interface UsersResponse {
+  content?: UserItem[];
+  items?: UserItem[];
 }
 
 export default function ListsPage() {
@@ -49,9 +57,26 @@ export default function ListsPage() {
   const [listMode, setListMode] = useState<ListMode>("companies");
   const [searchQuery, setSearchQuery] = useState("");
   const [lists, setLists] = useState<ListItem[]>([]);
+  const [users, setUsers] = useState<Map<string, UserItem>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
 
   const recordType = listMode === "companies" ? "company" : "person";
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/organizations/${organizationId}/users`);
+      if (response.ok) {
+        const data: UsersResponse = await response.json();
+        const usersList = data.content || data.items || [];
+        const usersMap = new Map<string, UserItem>();
+        usersList.forEach((user) => {
+          usersMap.set(user.id, user);
+        });
+        setUsers(usersMap);
+      }
+    } catch {
+    }
+  }, [organizationId]);
 
   const fetchLists = useCallback(async () => {
     setIsLoading(true);
@@ -66,6 +91,10 @@ export default function ListsPage() {
       setIsLoading(false);
     }
   }, [organizationId, recordType]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   useEffect(() => {
     fetchLists();
@@ -213,14 +242,26 @@ export default function ListsPage() {
                     <TableCell>{formatDate(list.created_date)}</TableCell>
                     <TableCell>{formatDate(list.updated_date)}</TableCell>
                     <TableCell>
-                      <Avatar className="h-8 w-8">
-                        {list.owner?.picture && (
-                          <AvatarImage src={list.owner.picture} alt={list.owner.name} />
-                        )}
-                        <AvatarFallback className="bg-muted">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                        </AvatarFallback>
-                      </Avatar>
+                      {list.created_user_id && users.get(list.created_user_id) ? (
+                        <Avatar className="h-8 w-8 rounded-lg">
+                          {users.get(list.created_user_id)?.avatar && (
+                            <AvatarImage
+                              src={users.get(list.created_user_id)?.avatar}
+                              alt={users.get(list.created_user_id)?.name || "User"}
+                              className="rounded-lg"
+                            />
+                          )}
+                          <AvatarFallback className="rounded-lg bg-muted">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                          </AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <Avatar className="h-8 w-8 rounded-lg">
+                          <AvatarFallback className="rounded-lg bg-muted">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
