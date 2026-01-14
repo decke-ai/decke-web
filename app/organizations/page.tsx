@@ -130,6 +130,11 @@ export default function NewOrganizationPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+      <div className="absolute top-4 right-4">
+        <Button variant="ghost" size="sm" onClick={() => window.location.href = "/auth/logout"}>
+          Sign out
+        </Button>
+      </div>
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-primary mb-2">
