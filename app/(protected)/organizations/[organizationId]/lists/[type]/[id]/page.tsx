@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, use } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Search, Columns3, Loader2, Building2, Users, MoreVertical, Trash2 } from "lucide-react";
+import { ArrowLeft, Search, Columns3, Loader2, Building2, Users, MoreVertical, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -79,6 +79,9 @@ interface RecordResponse {
     updated_date: string;
   }>;
   total_elements?: number;
+  total_pages?: number;
+  page_number?: number;
+  page_size?: number;
 }
 
 function mapRecordToCompany(record: {
@@ -178,11 +181,14 @@ export default function ListDetailPage({
   const [isPersonDrawerOpen, setIsPersonDrawerOpen] = useState(false);
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const isCompanyList = type === "companies";
 
-  const fetchListData = useCallback(async () => {
+  const fetchListData = useCallback(async (page: number) => {
     setIsLoading(true);
     try {
       const listResponse = await fetch(`/api/organizations/${organizationId}/lists/${id}`);
@@ -191,7 +197,11 @@ export default function ListDetailPage({
         setListData(list);
       }
 
-      const recordsResponse = await fetch(`/api/organizations/${organizationId}/lists/${id}/records`);
+      const queryParams = new URLSearchParams();
+      queryParams.set("page_size", "50");
+      queryParams.set("page_number", page.toString());
+
+      const recordsResponse = await fetch(`/api/organizations/${organizationId}/lists/${id}/records?${queryParams.toString()}`);
       if (recordsResponse.ok) {
         const data: RecordResponse = await recordsResponse.json();
         const records = data.content || data.items || [];
@@ -201,6 +211,10 @@ export default function ListDetailPage({
         } else {
           setPeople(records.map(mapRecordToPerson));
         }
+
+        setTotalElements(data.total_elements || records.length);
+        setTotalPages(data.total_pages || Math.ceil((data.total_elements || records.length) / 50));
+        setCurrentPage(data.page_number ?? page);
       }
     } catch {
     } finally {
@@ -209,7 +223,7 @@ export default function ListDetailPage({
   }, [organizationId, id, isCompanyList]);
 
   useEffect(() => {
-    fetchListData();
+    fetchListData(0);
   }, [fetchListData]);
 
   const handleCompanyClick = (company: Business) => {
@@ -438,6 +452,34 @@ export default function ListDetailPage({
           )}
         </div>
       </div>
+
+      {!searchQuery && totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <div className="text-sm text-muted-foreground">
+            Page {currentPage + 1} of {totalPages}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchListData(currentPage - 1)}
+              disabled={currentPage === 0 || isLoading}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchListData(currentPage + 1)}
+              disabled={currentPage >= totalPages - 1 || isLoading}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <CompanyDrawer
         company={selectedCompany}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Building2, Users, Search, Plus, Upload, FileSpreadsheet, ExternalLink, MoreHorizontal, Trash2, User, Loader2 } from "lucide-react";
+import { Building2, Users, Search, Plus, Upload, FileSpreadsheet, ExternalLink, MoreHorizontal, Trash2, User, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -37,6 +37,9 @@ interface ListResponse {
   content?: ListItem[];
   items?: ListItem[];
   total_elements?: number;
+  total_pages?: number;
+  page_number?: number;
+  page_size?: number;
 }
 
 interface UserItem {
@@ -59,6 +62,9 @@ export default function ListsPage() {
   const [lists, setLists] = useState<ListItem[]>([]);
   const [users, setUsers] = useState<Map<string, UserItem>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
 
   const recordType = listMode === "companies" ? "company" : "person";
 
@@ -78,13 +84,22 @@ export default function ListsPage() {
     }
   }, [organizationId]);
 
-  const fetchLists = useCallback(async () => {
+  const fetchLists = useCallback(async (page: number) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/organizations/${organizationId}/lists?record_type=${recordType}`);
+      const queryParams = new URLSearchParams();
+      queryParams.set("record_type", recordType);
+      queryParams.set("page_size", "50");
+      queryParams.set("page_number", page.toString());
+
+      const response = await fetch(`/api/organizations/${organizationId}/lists?${queryParams.toString()}`);
       if (response.ok) {
         const data: ListResponse = await response.json();
-        setLists(data.content || data.items || []);
+        const fetchedLists = data.content || data.items || [];
+        setLists(fetchedLists);
+        setTotalElements(data.total_elements || fetchedLists.length);
+        setTotalPages(data.total_pages || Math.ceil((data.total_elements || fetchedLists.length) / 50));
+        setCurrentPage(data.page_number ?? page);
       }
     } catch {
     } finally {
@@ -97,13 +112,14 @@ export default function ListsPage() {
   }, [fetchUsers]);
 
   useEffect(() => {
-    fetchLists();
+    fetchLists(0);
   }, [fetchLists]);
 
   const handleModeChange = (mode: ListMode) => {
     if (mode === listMode) return;
     setListMode(mode);
     setSearchQuery("");
+    setCurrentPage(0);
   };
 
   const handleImportCSV = () => {
@@ -121,7 +137,7 @@ export default function ListsPage() {
         method: "DELETE",
       });
       if (response.ok) {
-        fetchLists();
+        fetchLists(currentPage);
       }
     } catch {
     }
@@ -284,6 +300,34 @@ export default function ListsPage() {
             </TableBody>
           </Table>
         </div>
+
+        {!searchQuery && totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Page {currentPage + 1} of {totalPages}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchLists(currentPage - 1)}
+                disabled={currentPage === 0 || isLoading}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchLists(currentPage + 1)}
+                disabled={currentPage >= totalPages - 1 || isLoading}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
