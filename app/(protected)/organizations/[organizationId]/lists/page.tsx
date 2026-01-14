@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Building2, Users, Search, Plus, Upload, FileSpreadsheet, ExternalLink, MoreHorizontal, Trash2, User, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Building2, Users, Search, Plus, Upload, FileSpreadsheet, ExternalLink, MoreHorizontal, Trash2, User, Loader2, ChevronLeft, ChevronRight, Type, Calendar, UserCircle2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -230,81 +230,114 @@ export default function ListsPage() {
           </div>
         </div>
 
-        <div className="border rounded-lg overflow-hidden relative">
+        <div className="border rounded-lg overflow-hidden relative flex flex-col">
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           )}
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Creation date</TableHead>
-                <TableHead>Last update</TableHead>
-                <TableHead>Owner</TableHead>
-                <TableHead className="w-12">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredLists.length === 0 && !isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                    No lists found
-                  </TableCell>
+          <div className="flex-1 overflow-auto">
+            <Table className="w-max min-w-full">
+              <TableHeader className="sticky top-0 z-20 bg-background after:absolute after:left-0 after:bottom-0 after:w-full after:h-px after:bg-border">
+                <TableRow className="hover:bg-transparent border-b-0">
+                  <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
+                    <span className="flex items-center gap-1.5">
+                      <Type className="h-3 w-3" />
+                      Name
+                    </span>
+                  </TableHead>
+                  <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
+                    <span className="flex items-center gap-1.5">
+                      <Calendar className="h-3 w-3" />
+                      Creation date
+                    </span>
+                  </TableHead>
+                  <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
+                    <span className="flex items-center gap-1.5">
+                      <Calendar className="h-3 w-3" />
+                      Last update
+                    </span>
+                  </TableHead>
+                  <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
+                    <span className="flex items-center gap-1.5">
+                      <UserCircle2 className="h-3 w-3" />
+                      Owner
+                    </span>
+                  </TableHead>
+                  <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b w-12">
+                    <span className="flex items-center gap-1.5">
+                      <Settings className="h-3 w-3" />
+                      Actions
+                    </span>
+                  </TableHead>
                 </TableRow>
-              ) : (
-                filteredLists.map((list) => (
-                  <TableRow
-                    key={list.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => router.push(`/organizations/${organizationId}/lists/${listMode}/${list.id}`)}
-                  >
-                    <TableCell className="font-medium">{list.name}</TableCell>
-                    <TableCell>{formatDate(list.created_date)}</TableCell>
-                    <TableCell>{formatDate(list.updated_date)}</TableCell>
-                    <TableCell>
-                      {list.created_user_id && users.get(list.created_user_id) ? (
-                        <Avatar className="h-8 w-8 rounded-lg">
-                          {users.get(list.created_user_id)?.avatar && (
-                            <AvatarImage
-                              src={users.get(list.created_user_id)?.avatar}
-                              alt={users.get(list.created_user_id)?.name || "User"}
-                              className="rounded-lg"
-                            />
-                          )}
-                          <AvatarFallback className="rounded-lg bg-muted">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                          </AvatarFallback>
-                        </Avatar>
-                      ) : (
-                        <Avatar className="h-8 w-8 rounded-lg">
-                          <AvatarFallback className="rounded-lg bg-muted">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleDeleteList(list.id)}>
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+              </TableHeader>
+              <TableBody>
+                {filteredLists.length === 0 && !isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                      No lists found
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  filteredLists.map((list) => (
+                    <TableRow
+                      key={list.id}
+                      className="cursor-pointer hover:bg-muted/50 transition-colors border-b"
+                      onClick={() => router.push(`/organizations/${organizationId}/lists/${listMode}/${list.id}`)}
+                    >
+                      <TableCell className="font-medium py-1.5 border-r">{list.name}</TableCell>
+                      <TableCell className="py-1.5 border-r">{formatDate(list.created_date)}</TableCell>
+                      <TableCell className="py-1.5 border-r">{formatDate(list.updated_date)}</TableCell>
+                      <TableCell className="py-1.5 border-r">
+                        {list.created_user_id && users.get(list.created_user_id) ? (
+                          <Avatar className="h-8 w-8 rounded-lg">
+                            {users.get(list.created_user_id)?.avatar && (
+                              <AvatarImage
+                                src={users.get(list.created_user_id)?.avatar}
+                                alt={users.get(list.created_user_id)?.name || "User"}
+                                className="rounded-lg"
+                              />
+                            )}
+                            <AvatarFallback className="rounded-lg bg-muted">
+                              <User className="h-4 w-4 text-muted-foreground" />
+                            </AvatarFallback>
+                          </Avatar>
+                        ) : (
+                          <Avatar className="h-8 w-8 rounded-lg">
+                            <AvatarFallback className="rounded-lg bg-muted">
+                              <User className="h-4 w-4 text-muted-foreground" />
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
+                      </TableCell>
+                      <TableCell className="py-1.5" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleDeleteList(list.id)}>
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+                {/* Empty row for bottom border */}
+                {filteredLists.length > 0 && (
+                  <TableRow className="border-b hover:bg-transparent">
+                    <TableCell colSpan={5} className="h-0 p-0" />
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
 
         {!searchQuery && totalPages > 1 && (
