@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { Search, Columns3, Loader2 } from "lucide-react";
+import { Search, Columns3, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -89,16 +89,19 @@ export default function PeoplePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [people, setPeople] = useState<Person[]>([]);
   const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const fetchPeople = useCallback(async () => {
+  const fetchPeople = useCallback(async (page: number) => {
     setIsLoading(true);
     try {
       const queryParams = new URLSearchParams();
       queryParams.set("record_type", "person");
-      queryParams.set("page_size", "100");
+      queryParams.set("page_size", "50");
+      queryParams.set("page_number", page.toString());
       queryParams.set("sort_field", "created_date");
       queryParams.set("sort_direction", "desc");
 
@@ -109,6 +112,8 @@ export default function PeoplePage() {
         const mappedPeople = records.map(mapRecordToPerson);
         setPeople(mappedPeople);
         setTotalElements(data.total_elements || records.length);
+        setTotalPages(data.total_pages || Math.ceil((data.total_elements || records.length) / 50));
+        setCurrentPage(data.page_number ?? page);
       }
     } catch {
     } finally {
@@ -117,7 +122,7 @@ export default function PeoplePage() {
   }, [organizationId]);
 
   useEffect(() => {
-    fetchPeople();
+    fetchPeople(0);
   }, [fetchPeople]);
 
   const handlePersonClick = (person: Person) => {
@@ -217,6 +222,34 @@ export default function PeoplePage() {
           )}
         </div>
       </div>
+
+      {!searchQuery && totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <div className="text-sm text-muted-foreground">
+            Page {currentPage + 1} of {totalPages}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchPeople(currentPage - 1)}
+              disabled={currentPage === 0 || isLoading}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchPeople(currentPage + 1)}
+              disabled={currentPage >= totalPages - 1 || isLoading}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <PersonDrawer
         person={selectedPerson}
