@@ -157,7 +157,7 @@ export default function CompaniesPage() {
 
   return (
     <div className="flex h-full flex-col p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-3 h-10">
         <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -166,7 +166,7 @@ export default function CompaniesPage() {
                 Columns
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="start" className="w-56">
               {COMPANY_COLUMNS.filter((c) => c.id !== "name").map((column) => (
                 <DropdownMenuItem
                   key={column.id}

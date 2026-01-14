@@ -148,8 +148,32 @@ export default function PeoplePage() {
 
   return (
     <div className="flex h-full flex-col p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-3 h-10">
         <div className="flex items-center gap-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-9">
+                <Columns3 className="h-4 w-4" />
+                Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              {PEOPLE_COLUMNS.filter((c) => c.id !== "name").map((column) => (
+                <DropdownMenuItem
+                  key={column.id}
+                  onSelect={(e) => e.preventDefault()}
+                  className="flex items-center justify-between"
+                >
+                  <span>{column.label}</span>
+                  <Switch
+                    checked={!hiddenColumns.includes(column.id)}
+                    onCheckedChange={() => toggleColumn(column.id)}
+                  />
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <span className="text-sm text-muted-foreground border rounded-lg px-3 h-9 flex items-center">
             {(searchQuery ? filteredPeople.length : totalElements).toLocaleString("pt-BR")} people
           </span>
@@ -170,30 +194,6 @@ export default function PeoplePage() {
               className="pl-9 w-64"
             />
           </div>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-9">
-                <Columns3 className="h-4 w-4" />
-                Columns
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {PEOPLE_COLUMNS.filter((c) => c.id !== "name").map((column) => (
-                <DropdownMenuItem
-                  key={column.id}
-                  onSelect={(e) => e.preventDefault()}
-                  className="flex items-center justify-between"
-                >
-                  <span>{column.label}</span>
-                  <Switch
-                    checked={!hiddenColumns.includes(column.id)}
-                    onCheckedChange={() => toggleColumn(column.id)}
-                  />
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 

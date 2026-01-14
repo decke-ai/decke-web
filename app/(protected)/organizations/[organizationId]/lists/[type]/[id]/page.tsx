@@ -319,25 +319,65 @@ export default function ListDetailPage({
 
   return (
     <div className="flex h-full flex-col p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push(`/organizations/${organizationId}/lists`)}
-            className="h-9 w-9"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+      <div className="flex items-center gap-3 mb-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => router.push(`/organizations/${organizationId}/lists`)}
+          className="h-9 w-9"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
 
-          <div className="flex items-center gap-2">
-            {isCompanyList ? (
-              <Building2 className="h-5 w-5 text-muted-foreground" />
-            ) : (
-              <Users className="h-5 w-5 text-muted-foreground" />
-            )}
-            <h2 className="text-lg font-semibold">{listData?.name || "Loading..."}</h2>
-          </div>
+        <div className="flex items-center gap-2">
+          {isCompanyList ? (
+            <Building2 className="h-5 w-5 text-muted-foreground" />
+          ) : (
+            <Users className="h-5 w-5 text-muted-foreground" />
+          )}
+          <h2 className="text-lg font-semibold">{listData?.name || "Loading..."}</h2>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between mb-3 h-10">
+        <div className="flex items-center gap-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-9">
+                <Columns3 className="h-4 w-4" />
+                Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              {isCompanyList
+                ? COMPANY_COLUMNS.filter((c) => c.id !== "name").map((column) => (
+                    <DropdownMenuItem
+                      key={column.id}
+                      onSelect={(e) => e.preventDefault()}
+                      className="flex items-center justify-between"
+                    >
+                      <span>{column.label}</span>
+                      <Switch
+                        checked={!hiddenCompanyColumns.includes(column.id)}
+                        onCheckedChange={() => toggleCompanyColumn(column.id)}
+                      />
+                    </DropdownMenuItem>
+                  ))
+                : PEOPLE_COLUMNS.filter((c) => c.id !== "name").map((column) => (
+                    <DropdownMenuItem
+                      key={column.id}
+                      onSelect={(e) => e.preventDefault()}
+                      className="flex items-center justify-between"
+                    >
+                      <span>{column.label}</span>
+                      <Switch
+                        checked={!hiddenPeopleColumns.includes(column.id)}
+                        onCheckedChange={() => togglePeopleColumn(column.id)}
+                      />
+                    </DropdownMenuItem>
+                  ))}
+          </DropdownMenuContent>
+          </DropdownMenu>
 
           <span className="text-sm text-muted-foreground border rounded-lg px-3 h-9 flex items-center">
             {totalItems.toLocaleString("pt-BR")} {entityLabel}
@@ -370,44 +410,6 @@ export default function ListDetailPage({
               className="pl-9 w-64"
             />
           </div>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-9">
-                <Columns3 className="h-4 w-4" />
-                Columns
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {isCompanyList
-                ? COMPANY_COLUMNS.filter((c) => c.id !== "name").map((column) => (
-                    <DropdownMenuItem
-                      key={column.id}
-                      onSelect={(e) => e.preventDefault()}
-                      className="flex items-center justify-between"
-                    >
-                      <span>{column.label}</span>
-                      <Switch
-                        checked={!hiddenCompanyColumns.includes(column.id)}
-                        onCheckedChange={() => toggleCompanyColumn(column.id)}
-                      />
-                    </DropdownMenuItem>
-                  ))
-                : PEOPLE_COLUMNS.filter((c) => c.id !== "name").map((column) => (
-                    <DropdownMenuItem
-                      key={column.id}
-                      onSelect={(e) => e.preventDefault()}
-                      className="flex items-center justify-between"
-                    >
-                      <span>{column.label}</span>
-                      <Switch
-                        checked={!hiddenPeopleColumns.includes(column.id)}
-                        onCheckedChange={() => togglePeopleColumn(column.id)}
-                      />
-                    </DropdownMenuItem>
-                  ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 

@@ -159,32 +159,38 @@ export default function ListsPage() {
   return (
     <div className="h-full p-6 overflow-auto">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex rounded-lg bg-muted p-1 border">
-            <button
-              onClick={() => handleModeChange("companies")}
-              className={cn(
-                "flex items-center justify-center gap-2 rounded-md px-3 py-1 text-sm font-medium transition-colors",
-                listMode === "companies"
-                  ? "bg-background shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Building2 className="h-4 w-4" />
-              Companies
-            </button>
-            <button
-              onClick={() => handleModeChange("people")}
-              className={cn(
-                "flex items-center justify-center gap-2 rounded-md px-3 py-1 text-sm font-medium transition-colors",
-                listMode === "people"
-                  ? "bg-background shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Users className="h-4 w-4" />
-              People
-            </button>
+        <div className="flex items-center justify-between h-10">
+          <div className="flex items-center gap-3">
+            <div className="flex rounded-lg bg-muted p-1 border">
+              <button
+                onClick={() => handleModeChange("companies")}
+                className={cn(
+                  "flex items-center justify-center gap-2 rounded-md px-3 py-1 text-sm font-medium transition-colors",
+                  listMode === "companies"
+                    ? "bg-background shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Building2 className="h-4 w-4" />
+                Companies
+              </button>
+              <button
+                onClick={() => handleModeChange("people")}
+                className={cn(
+                  "flex items-center justify-center gap-2 rounded-md px-3 py-1 text-sm font-medium transition-colors",
+                  listMode === "people"
+                    ? "bg-background shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Users className="h-4 w-4" />
+                People
+              </button>
+            </div>
+
+            <span className="text-sm text-muted-foreground border rounded-lg px-3 h-9 flex items-center">
+              {(searchQuery ? filteredLists.length : totalElements).toLocaleString("pt-BR")} lists
+            </span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -200,7 +206,7 @@ export default function ListsPage() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline">
+                <Button variant="outline" className="h-9">
                   <Upload className="h-4 w-4" />
                   Import
                 </Button>
@@ -217,7 +223,7 @@ export default function ListsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button onClick={handleNewList}>
+            <Button onClick={handleNewList} className="h-9">
               <Plus className="h-4 w-4" />
               New list
             </Button>
