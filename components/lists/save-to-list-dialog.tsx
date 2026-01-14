@@ -70,6 +70,7 @@ function mapCompanyToValues(company: Business): Record<string, unknown> {
     twitter_url: company.twitter_url,
     logo: company.logo || company.logo_url,
     logo_url: company.logo_url || company.logo,
+    company_avatar: company.logo || company.logo_url,
     phone: company.phone,
     email: company.email,
     technologies: company.technologies,

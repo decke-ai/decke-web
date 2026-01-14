@@ -2,9 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { Search, Columns3, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Columns3, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
@@ -102,7 +101,6 @@ function mapRecordToCompany(record: {
 export default function CompaniesPage() {
   const params = useParams();
   const organizationId = params.organizationId as string;
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [hiddenColumns, setHiddenColumns] = useState<CompanyColumnId[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -157,37 +155,10 @@ export default function CompaniesPage() {
     );
   };
 
-  const filteredCompanies = companies.filter((company) =>
-    company.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    company.domain?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    company.industry?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
     <div className="flex h-full flex-col p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground border rounded-lg px-3 h-9 flex items-center">
-            {(searchQuery ? filteredCompanies.length : totalElements).toLocaleString("pt-BR")} companies
-          </span>
-          {selectedIds.length > 0 && (
-            <span className="text-sm text-muted-foreground border rounded-lg px-3 h-9 flex items-center">
-              {selectedIds.length} selected
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search companies..."
-              className="pl-9 w-64"
-            />
-          </div>
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="h-9">
@@ -211,6 +182,15 @@ export default function CompaniesPage() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <span className="text-sm text-muted-foreground border rounded-lg px-3 h-9 flex items-center">
+            {totalElements.toLocaleString("pt-BR")} companies
+          </span>
+          {selectedIds.length > 0 && (
+            <span className="text-sm text-muted-foreground border rounded-lg px-3 h-9 flex items-center">
+              {selectedIds.length} selected
+            </span>
+          )}
         </div>
       </div>
 
@@ -224,13 +204,13 @@ export default function CompaniesPage() {
           ref={scrollContainerRef}
           className="flex-1 overflow-auto"
         >
-          {filteredCompanies.length === 0 ? (
+          {companies.length === 0 ? (
             <div className="flex items-center justify-center h-full text-muted-foreground">
               No companies found
             </div>
           ) : (
             <CompanyTable
-              companies={filteredCompanies}
+              companies={companies}
               selectedIds={selectedIds}
               onSelectChange={setSelectedIds}
               hiddenColumns={hiddenColumns}
@@ -240,7 +220,7 @@ export default function CompaniesPage() {
         </div>
       </div>
 
-      {!searchQuery && totalPages > 1 && (
+      {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
           <div className="text-sm text-muted-foreground">
             Page {currentPage + 1} of {totalPages}
