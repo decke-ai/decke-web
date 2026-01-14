@@ -136,7 +136,7 @@ type OnboardingData = {
 export default function OnboardingPage() {
   const router = useRouter();
   const params = useParams();
-  const { isLoading: isAuthLoading, isAuthenticated } = useAuth();
+  const { isLoading: isAuthLoading, isAuthenticated, refreshUser } = useAuth();
 
   const organizationId = params.organizationId as string;
   const userId = params.userId as string;
@@ -267,6 +267,7 @@ export default function OnboardingPage() {
         throw new Error(errorData.error || "Failed to save onboarding data");
       }
 
+      await refreshUser();
       window.location.href = `/organizations/${organizationId}/searches`;
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
