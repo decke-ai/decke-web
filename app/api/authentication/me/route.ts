@@ -29,6 +29,8 @@ export async function GET() {
     }
 
     const orgUrl = `${API_URL}/organizations?domain=${encodeURIComponent(domain)}`;
+    console.log("[AUTH ME] Fetching organization for domain:", domain);
+    console.log("[AUTH ME] URL:", orgUrl);
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -40,8 +42,12 @@ export async function GET() {
       headers,
     });
 
+    console.log("[AUTH ME] Backend response status:", response.status);
+
     if (!response.ok) {
-      return NextResponse.json({ exists: false, user: null, organization: null });
+      const errorText = await response.text();
+      console.log("[AUTH ME] Backend error:", errorText);
+      return NextResponse.json({ exists: false, user: null, organization: null, debug: { backendError: errorText, status: response.status } });
     }
 
     const data = await response.json();
