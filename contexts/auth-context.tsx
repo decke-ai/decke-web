@@ -59,6 +59,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsCheckingBackend(true);
     try {
       const response = await fetch("/api/authentication/me");
+
+      if (!response.ok) {
+        setOrganization(null);
+        setBackendUser(null);
+        setNeedsOnboarding(true);
+        setIsCheckingBackend(false);
+        return;
+      }
+
       const data = await response.json();
 
       if (data.exists && data.organization) {
