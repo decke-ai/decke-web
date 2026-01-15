@@ -20,6 +20,10 @@ export async function GET() {
     const email = session.user.email;
     const domain = email?.split("@")[1];
 
+    if (!token) {
+      return NextResponse.json({ exists: false, user: null, organization: null });
+    }
+
     if (!domain) {
       return NextResponse.json({ exists: false, user: null, organization: null });
     }
@@ -28,25 +32,16 @@ export async function GET() {
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
     };
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
 
-    let response = await fetch(orgUrl, {
+    const response = await fetch(orgUrl, {
       method: "GET",
       headers,
     });
 
     if (!response.ok) {
-      response = await fetch(orgUrl, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (!response.ok) {
-        return NextResponse.json({ exists: false, user: null, organization: null });
-      }
+      return NextResponse.json({ exists: false, user: null, organization: null });
     }
 
     const data = await response.json();
@@ -56,17 +51,11 @@ export async function GET() {
       const org = organizations[0];
 
       const usersUrl = `${API_URL}/organizations/${org.id}/users?email=${encodeURIComponent(email)}`;
-      let usersResponse = await fetch(usersUrl, {
+
+      const usersResponse = await fetch(usersUrl, {
         method: "GET",
         headers,
       });
-
-      if (!usersResponse.ok) {
-        usersResponse = await fetch(usersUrl, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-      }
 
       let userData = null;
       if (usersResponse.ok) {

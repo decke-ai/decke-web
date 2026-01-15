@@ -82,7 +82,7 @@ function mapPersonToValues(person: Person): Record<string, unknown> {
   return {
     first_name: person.first_name,
     last_name: person.last_name,
-    full_name: person.full_name,
+    full_name: person.full_name || `${person.first_name || ""} ${person.last_name || ""}`.trim(),
     job_title: person.job_title,
     job_level: person.job_level,
     job_department: person.job_department,
@@ -90,16 +90,18 @@ function mapPersonToValues(person: Person): Record<string, unknown> {
     company_domain: person.company_domain,
     company_linkedin_url: person.company_linkedin_url,
     company_logo: person.company_logo,
+    business_id: person.business_id,
     city: person.city,
     region: person.region,
     country_name: person.country_name || person.country,
     country: person.country || person.country_name,
     state: person.region,
-    linkedin_url: person.linkedin_url,
+    linkedin_url: person.linkedin_url || person.linkedin_profile || person.linkedin,
+    linkedin_profile: person.linkedin_profile || person.linkedin_url || person.linkedin,
     profile_picture: person.profile_picture,
-    skills: person.skills,
-    experiences: person.experiences,
-    interests: person.interests,
+    skills: person.skills || person.skill,
+    experiences: person.experiences || person.experience || person.past_experiences || person.work_experience,
+    interests: person.interests || person.interest || person.topics_of_interest || person.personal_interests,
   };
 }
 

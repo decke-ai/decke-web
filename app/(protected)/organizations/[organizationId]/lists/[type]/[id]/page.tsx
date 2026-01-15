@@ -149,16 +149,18 @@ function mapRecordToPerson(record: {
     company_name: (values.company_name as string) || "",
     company_domain: (values.company_domain as string) || "",
     company_linkedin_url: (values.company_linkedin_url as string) || "",
-    company_logo: (values.company_logo as string) || "",
+    company_logo: (values.company_logo as string) || (values.business_logo as string) || "",
+    business_id: (values.business_id as string) || "",
     city: (values.city as string) || "",
     region: (values.region as string) || (values.state as string) || "",
     country_name: (values.country_name as string) || (values.country as string) || "",
     country: (values.country as string) || (values.country_name as string) || "",
-    linkedin_url: (values.linkedin_url as string) || "",
+    linkedin_url: (values.linkedin_url as string) || (values.linkedin_profile as string) || (values.linkedin as string) || "",
+    linkedin_profile: (values.linkedin_profile as string) || (values.linkedin_url as string) || "",
     profile_picture: (values.profile_picture as string) || "",
-    skills: (values.skills as string[]) || [],
-    experiences: (values.experiences as string[]) || [],
-    interests: (values.interests as string[]) || [],
+    skills: (values.skills as string[]) || (values.skill as string[]) || [],
+    experiences: (values.experiences as string[]) || (values.experience as string[]) || (values.past_experiences as string[]) || (values.work_experience as string[]) || [],
+    interests: (values.interests as string[]) || (values.interest as string[]) || (values.topics_of_interest as string[]) || (values.personal_interests as string[]) || [],
   };
 }
 
