@@ -154,7 +154,7 @@ function mapRecordToPerson(record: {
     company_name: (values.company_name as string) || (values.person_company_name as string) || "",
     company_domain: (values.company_domain as string) || (values.person_company_domain as string) || "",
     company_linkedin_url: (values.company_linkedin_url as string) || (values.person_company_linkedin_url as string) || "",
-    company_logo: (values.company_logo as string) || (values.company_avatar as string) || (values.business_logo as string) || "",
+    company_logo: (values.company_avatar as string) || (values.company_logo as string) || (values.business_logo as string) || "",
     business_id: (values.business_id as string) || "",
     city: (values.city as string) || (values.person_city_name as string) || "",
     region: (values.region as string) || (values.state as string) || (values.person_region_name as string) || "",
