@@ -79,29 +79,52 @@ function mapCompanyToValues(company: Business): Record<string, unknown> {
 }
 
 function mapPersonToValues(person: Person): Record<string, unknown> {
+  const fullName = person.full_name || `${person.first_name || ""} ${person.last_name || ""}`.trim();
+  const linkedinUrl = person.linkedin_url || person.linkedin_profile || person.linkedin || "";
+  const skills = person.skills || person.skill || [];
+  const experiences = person.experiences || person.experience || person.past_experiences || person.work_experience || [];
+  const interests = person.interests || person.interest || person.topics_of_interest || person.personal_interests || [];
+
   return {
-    first_name: person.first_name,
-    last_name: person.last_name,
-    full_name: person.full_name || `${person.first_name || ""} ${person.last_name || ""}`.trim(),
-    job_title: person.job_title,
-    job_level: person.job_level,
-    job_department: person.job_department,
+    // Person fields (with person_ prefix for backend)
+    person_name: fullName,
+    person_first_name: person.first_name,
+    person_last_name: person.last_name,
+    person_job_title: person.job_title,
+    person_job_level: person.job_level,
+    person_job_department: person.job_department,
+    person_city_name: person.city,
+    person_region_name: person.region,
+    person_country_name: person.country_name || person.country,
+    person_linkedin_url: linkedinUrl,
+    person_profile_picture: person.profile_picture,
+    person_skills: skills,
+    person_experiences: experiences,
+    person_interests: interests,
+    person_company_name: person.company_name,
+    person_company_domain: person.company_domain,
+    person_company_linkedin_url: person.company_linkedin_url,
+
+    // Company fields (with company_ prefix for backend)
     company_name: person.company_name,
     company_domain: person.company_domain,
     company_linkedin_url: person.company_linkedin_url,
-    company_logo: person.company_logo,
+    company_avatar: person.company_logo,
     business_id: person.business_id,
+
+    // Legacy fields (for backward compatibility)
+    first_name: person.first_name,
+    last_name: person.last_name,
+    full_name: fullName,
+    job_title: person.job_title,
     city: person.city,
     region: person.region,
     country_name: person.country_name || person.country,
-    country: person.country || person.country_name,
-    state: person.region,
-    linkedin_url: person.linkedin_url || person.linkedin_profile || person.linkedin,
-    linkedin_profile: person.linkedin_profile || person.linkedin_url || person.linkedin,
+    linkedin_url: linkedinUrl,
     profile_picture: person.profile_picture,
-    skills: person.skills || person.skill,
-    experiences: person.experiences || person.experience || person.past_experiences || person.work_experience,
-    interests: person.interests || person.interest || person.topics_of_interest || person.personal_interests,
+    skills: skills,
+    experiences: experiences,
+    interests: interests,
   };
 }
 
