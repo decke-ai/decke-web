@@ -139,8 +139,8 @@ function mapRecordToPerson(record: {
   const values = record.values || {};
   const personName = (values.person_name as string) || (values.full_name as string) || "";
   const nameParts = personName.split(" ");
-  const firstName = (values.first_name as string) || (values.person_first_name as string) || nameParts[0] || "";
-  const lastName = (values.last_name as string) || (values.person_last_name as string) || nameParts.slice(1).join(" ") || "";
+  const firstName = (values.person_first_name as string) || (values.first_name as string) || nameParts[0] || "";
+  const lastName = (values.person_last_name as string) || (values.last_name as string) || nameParts.slice(1).join(" ") || "";
 
   return {
     id: record.id,
@@ -148,24 +148,24 @@ function mapRecordToPerson(record: {
     first_name: firstName,
     last_name: lastName,
     full_name: personName || `${firstName} ${lastName}`.trim(),
-    job_title: (values.job_title as string) || (values.person_job_title as string) || "",
-    job_level: (values.job_level as string) || (values.person_job_level as string) || "",
-    job_department: (values.job_department as string) || (values.person_job_department as string) || "",
+    job_title: (values.person_job_title as string) || (values.job_title as string) || "",
+    job_level: (values.person_job_level as string) || (values.job_level as string) || "",
+    job_department: (values.person_job_department as string) || (values.job_department as string) || "",
     company_name: (values.company_name as string) || (values.person_company_name as string) || "",
     company_domain: (values.company_domain as string) || (values.person_company_domain as string) || "",
     company_linkedin_url: (values.company_linkedin_url as string) || (values.person_company_linkedin_url as string) || "",
     company_logo: (values.company_avatar as string) || (values.company_logo as string) || (values.business_logo as string) || "",
     business_id: (values.business_id as string) || "",
-    city: (values.city as string) || (values.person_city_name as string) || "",
-    region: (values.region as string) || (values.state as string) || (values.person_region_name as string) || "",
-    country_name: (values.country_name as string) || (values.country as string) || (values.person_country_name as string) || "",
-    country: (values.country as string) || (values.country_name as string) || (values.person_country_name as string) || "",
-    linkedin_url: (values.linkedin_url as string) || (values.person_linkedin_url as string) || (values.linkedin_profile as string) || "",
-    linkedin_profile: (values.linkedin_profile as string) || (values.linkedin_url as string) || (values.person_linkedin_url as string) || "",
-    profile_picture: (values.profile_picture as string) || (values.person_profile_picture as string) || "",
-    skills: (values.skills as string[]) || (values.person_skills as string[]) || [],
-    experiences: (values.experiences as string[]) || (values.person_experiences as string[]) || [],
-    interests: (values.interests as string[]) || (values.person_interests as string[]) || [],
+    city: (values.person_city_name as string) || (values.city as string) || "",
+    region: (values.person_region_name as string) || (values.region as string) || (values.state as string) || "",
+    country_name: (values.person_country_name as string) || (values.country_name as string) || (values.country as string) || "",
+    country: (values.person_country_name as string) || (values.country as string) || (values.country_name as string) || "",
+    linkedin_url: (values.person_linkedin_url as string) || (values.linkedin_url as string) || (values.linkedin_profile as string) || "",
+    linkedin_profile: (values.person_linkedin_url as string) || (values.linkedin_profile as string) || (values.linkedin_url as string) || "",
+    profile_picture: (values.person_profile_picture as string) || (values.profile_picture as string) || "",
+    skills: (values.person_skills as string[]) || (values.skills as string[]) || [],
+    experiences: (values.person_experiences as string[]) || (values.experiences as string[]) || [],
+    interests: (values.person_interests as string[]) || (values.interests as string[]) || [],
   };
 }
 
