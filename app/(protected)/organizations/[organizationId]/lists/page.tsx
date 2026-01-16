@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Building2, Users, Search, Plus, Upload, FileSpreadsheet, ExternalLink, MoreHorizontal, Trash2, User, Loader2, ChevronLeft, ChevronRight, Type, Calendar, UserCircle2, Settings } from "lucide-react";
+import { Building2, Users, Search, Plus, Upload, FileSpreadsheet, ExternalLink, MoreHorizontal, Trash2, User, Loader2, ChevronLeft, ChevronRight, Type, Calendar, UserCircle2, Settings, ListIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Empty } from "@/components/ui/empty";
 import { cn } from "@/lib/utils";
 
 type ListMode = "companies" | "people";
@@ -274,9 +275,19 @@ export default function ListsPage() {
               </TableHeader>
               <TableBody>
                 {filteredLists.length === 0 && !isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                      No lists found
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={5} className="h-[400px] p-0">
+                      <Empty
+                        icon={<ListIcon className="h-8 w-8 text-muted-foreground" />}
+                        title="No lists yet"
+                        description={`Create your first ${listMode === "companies" ? "company" : "people"} list to start organizing your data.`}
+                        action={
+                          <Button onClick={handleNewList} className="h-9">
+                            <Plus className="h-4 w-4" />
+                            New list
+                          </Button>
+                        }
+                      />
                     </TableCell>
                   </TableRow>
                 ) : (

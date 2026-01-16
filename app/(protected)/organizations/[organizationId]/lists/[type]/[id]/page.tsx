@@ -26,6 +26,7 @@ import { CompanyTable } from "@/components/companies/company-table";
 import { CompanyDrawer } from "@/components/companies/company-drawer";
 import { PeopleTable } from "@/components/people/people-table";
 import { PersonDrawer } from "@/components/people/person-drawer";
+import { Empty } from "@/components/ui/empty";
 import { Business, Person } from "@/lib/explorium/types";
 
 type CompanyColumnId = "name" | "description" | "industry" | "employees" | "revenue" | "location" | "domain" | "linkedin";
@@ -437,9 +438,11 @@ export default function ListDetailPage({
         >
           {isCompanyList ? (
             filteredCompanies.length === 0 && !isLoading ? (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
-                No companies found
-              </div>
+              <Empty
+                icon={<Building2 className="h-8 w-8 text-muted-foreground" />}
+                title="No companies in this list"
+                description="Add companies from the search page to start building your list."
+              />
             ) : (
               <CompanyTable
                 companies={filteredCompanies}
@@ -451,9 +454,11 @@ export default function ListDetailPage({
             )
           ) : (
             filteredPeople.length === 0 && !isLoading ? (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
-                No people found
-              </div>
+              <Empty
+                icon={<Users className="h-8 w-8 text-muted-foreground" />}
+                title="No people in this list"
+                description="Add people from the search page to start building your list."
+              />
             ) : (
               <PeopleTable
                 people={filteredPeople}

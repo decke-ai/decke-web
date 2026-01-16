@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { Search, Columns3, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Columns3, Loader2, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PeopleTable } from "@/components/people/people-table";
 import { PersonDrawer } from "@/components/people/person-drawer";
+import { Empty } from "@/components/ui/empty";
 import { Person } from "@/lib/explorium/types";
 
 interface RecordResponse {
@@ -219,10 +220,12 @@ export default function PeoplePage() {
           ref={scrollContainerRef}
           className="flex-1 overflow-auto"
         >
-          {filteredPeople.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              No people found
-            </div>
+          {filteredPeople.length === 0 && !isLoading ? (
+            <Empty
+              icon={<Users className="h-8 w-8 text-muted-foreground" />}
+              title="No people records yet"
+              description="Save people from the search page to see them here."
+            />
           ) : (
             <PeopleTable
               people={filteredPeople}

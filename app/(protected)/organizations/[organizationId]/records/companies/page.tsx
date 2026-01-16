@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { Columns3, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Columns3, Loader2, ChevronLeft, ChevronRight, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CompanyTable } from "@/components/companies/company-table";
 import { CompanyDrawer } from "@/components/companies/company-drawer";
+import { Empty } from "@/components/ui/empty";
 import { Business } from "@/lib/explorium/types";
 
 interface RecordResponse {
@@ -204,10 +205,12 @@ export default function CompaniesPage() {
           ref={scrollContainerRef}
           className="flex-1 overflow-auto"
         >
-          {companies.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              No companies found
-            </div>
+          {companies.length === 0 && !isLoading ? (
+            <Empty
+              icon={<Building2 className="h-8 w-8 text-muted-foreground" />}
+              title="No company records yet"
+              description="Save companies from the search page to see them here."
+            />
           ) : (
             <CompanyTable
               companies={companies}
