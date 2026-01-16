@@ -15,7 +15,6 @@ import {
   Building,
   Users,
   Coins,
-  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useAnalytics } from "@/hooks/use-analytics";
@@ -71,7 +70,6 @@ export function AppSidebar() {
 
   const dataNavItems = [
     { title: "Searches", icon: Search, href: `/organizations/${organizationId}/searches` },
-    { title: "AI Search", icon: Sparkles, href: `/organizations/${organizationId}/ai-search` },
     { title: "Lists", icon: List, href: `/organizations/${organizationId}/lists` },
   ];
 

@@ -40,6 +40,7 @@ export interface Business {
   business_description?: string;
   business_type?: string;
   linkedin_company_url?: string;
+  linkedin_industry_category?: string;
 }
 
 // BusinessFilters uses the same field names as the autocomplete API
@@ -105,6 +106,7 @@ export interface FetchBusinessesResponse {
 export interface FetchBusinessesStatsResponse {
   total?: number;
   total_results?: number;
+  total_elements?: number;
   filters_breakdown?: Record<string, Record<string, number>>;
 }
 
@@ -263,6 +265,7 @@ export type FetchProspectsResponse = FetchPeopleResponse;
 export interface FetchPeopleStatsResponse {
   total?: number;
   total_results?: number;
+  total_elements?: number;
   filters_breakdown?: Record<string, Record<string, number>>;
 }
 
@@ -352,4 +355,25 @@ export const FILTER_TO_SEARCH_API_MAP: Record<string, string> = {
   // Other
   business_intent_topics: "business_intent_topics",
   domain: "domain",
+};
+
+export const AUTOCOMPLETE_FIELD_TO_BACKEND_MAP: Record<string, string> = {
+  country: "company_country_name",
+  country_code: "company_country_iso_alpha_2",
+  region_country_code: "company_region_code",
+  city_region_country: "company_city_name",
+  google_category: "company_google_category",
+  naics_category: "company_naics",
+  linkedin_category: "company_linkedin_category",
+  company_tech_stack_tech: "company_technology_stack",
+  company_tech_stack_categories: "company_technology_stack_category",
+  company_size: "company_size",
+  company_revenue: "company_revenue",
+  company_age: "company_age",
+  number_of_locations: "company_locations",
+  job_title: "person_job_title",
+  job_department: "person_job_department",
+  job_level: "person_job_level",
+  business_intent_topics: "company_intent_topic",
+  company_name: "company_name",
 };

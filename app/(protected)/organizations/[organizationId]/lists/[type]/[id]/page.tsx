@@ -98,7 +98,7 @@ function mapRecordToCompany(record: {
     website: (values.website as string) || (values.company_website as string),
     description: (values.description as string) || (values.business_description as string) || (values.company_description as string),
     business_description: (values.business_description as string) || (values.description as string) || (values.company_description as string),
-    industry: (values.industry as string) || (values.company_industry as string),
+    industry: (values.company_linkedin_category as string) || (values.industry as string) || (values.company_industry as string),
     sub_industry: (values.sub_industry as string) || (values.company_sub_industry as string),
     employee_range: (values.employee_range as string) || (values.number_of_employees_range as string) || (values.company_employee as string),
     number_of_employees_range: (values.number_of_employees_range as string) || (values.employee_range as string) || (values.company_employee as string),

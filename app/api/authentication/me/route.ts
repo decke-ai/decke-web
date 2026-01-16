@@ -9,6 +9,7 @@ const API_URL = process.env.API_URL || "https://api.decke.ai";
 export async function GET() {
   try {
     const session = await auth0.getSession();
+
     if (!session) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -17,6 +18,7 @@ export async function GET() {
     }
 
     const token = await getAuthToken();
+
     const email = session.user.email;
     const domain = email?.split("@")[1];
 
@@ -29,8 +31,6 @@ export async function GET() {
     }
 
     const orgUrl = `${API_URL}/organizations?domain=${encodeURIComponent(domain)}`;
-    console.log("[AUTH ME] Fetching organization for domain:", domain);
-    console.log("[AUTH ME] URL:", orgUrl);
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -42,12 +42,8 @@ export async function GET() {
       headers,
     });
 
-    console.log("[AUTH ME] Backend response status:", response.status);
-
     if (!response.ok) {
-      const errorText = await response.text();
-      console.log("[AUTH ME] Backend error:", errorText);
-      return NextResponse.json({ exists: false, user: null, organization: null, debug: { backendError: errorText, status: response.status } });
+      return NextResponse.json({ exists: false, user: null, organization: null });
     }
 
     const data = await response.json();

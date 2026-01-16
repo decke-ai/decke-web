@@ -21,6 +21,7 @@ interface PeopleFiltersProps {
   filters: PeopleFilters;
   onChange: (filters: PeopleFilters) => void;
   onClear: () => void;
+  organizationId: string;
 }
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -221,6 +222,7 @@ export function PeopleFiltersComponent({
   filters,
   onChange,
   onClear,
+  organizationId,
 }: PeopleFiltersProps) {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
@@ -258,9 +260,9 @@ export function PeopleFiltersComponent({
         const params = new URLSearchParams({
           field,
           query: query || " ",
-          ...(semanticSearch && { semantic_search: "true" }),
+          ...(semanticSearch && { semantic: "true" }),
         });
-        const response = await fetch(`/api/people/autocomplete?${params}`);
+        const response = await fetch(`/api/organizations/${organizationId}/people/autocomplete?${params}`);
         if (response.ok) {
           const data = await response.json();
           setFilterStates((prev) => ({
@@ -281,7 +283,7 @@ export function PeopleFiltersComponent({
         }));
       }
     },
-    []
+    [organizationId]
   );
 
   useEffect(() => {

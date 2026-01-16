@@ -31,7 +31,6 @@ import {
   Person,
   FetchPeopleStatsResponse,
 } from "@/lib/explorium/types";
-import { mergeEnrichmentData, EnrichmentResponse } from "@/lib/explorium/client";
 import { cn } from "@/lib/utils";
 
 const INITIAL_PAGE_SIZE = 50;
@@ -136,7 +135,7 @@ export default function SearchPage() {
 
   const fetchCompanyStats = async (searchFilters: BusinessFilters) => {
     try {
-      const response = await fetch("/api/companies/stats", {
+      const response = await fetch(`/api/organizations/${organizationId}/companies/stats`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ filters: searchFilters }),
@@ -150,37 +149,12 @@ export default function SearchPage() {
     }
   };
 
-  const enrichCompanies = async (businesses: Business[]): Promise<Business[]> => {
-    const businessIds = businesses
-      .map((b) => b.business_id || b.id)
-      .filter((id): id is string => !!id);
-
-    if (businessIds.length === 0) return businesses;
-
-    try {
-      const response = await fetch("/api/companies/enrich", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessIds }),
-      });
-
-      if (response.ok) {
-        const enrichmentData: EnrichmentResponse = await response.json();
-        return mergeEnrichmentData(businesses, enrichmentData);
-      }
-    } catch (error) {
-      console.error("Error enriching companies:", error);
-    }
-
-    return businesses;
-  };
-
   const handleSearchCompanies = useCallback(async () => {
     setIsLoading(true);
     setCurrentPage(1);
 
     try {
-      const response = await fetch("/api/companies", {
+      const response = await fetch(`/api/organizations/${organizationId}/companies/search`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -195,8 +169,7 @@ export default function SearchPage() {
         const businesses: Business[] =
           data.businesses || data.results || data.data || [];
 
-        const enrichedBusinesses = await enrichCompanies(businesses);
-        setCompanies(enrichedBusinesses);
+        setCompanies(businesses);
 
         const total = data.total ?? data.total_results ?? 0;
         const totalPages = data.total_pages ?? Math.ceil(total / INITIAL_PAGE_SIZE);
@@ -216,13 +189,13 @@ export default function SearchPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [companyFilters]);
+  }, [companyFilters, organizationId]);
 
   const fetchCompaniesPage = useCallback(async (page: number) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/companies", {
+      const response = await fetch(`/api/organizations/${organizationId}/companies/search`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -237,8 +210,7 @@ export default function SearchPage() {
         const newBusinesses: Business[] =
           data.businesses || data.results || data.data || [];
 
-        const enrichedBusinesses = await enrichCompanies(newBusinesses);
-        setCompanies(enrichedBusinesses);
+        setCompanies(newBusinesses);
         setCurrentPage(page);
 
         const total = data.total ?? data.total_results ?? 0;
@@ -252,11 +224,11 @@ export default function SearchPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [companyFilters]);
+  }, [companyFilters, organizationId]);
 
   const fetchPeopleStats = async (searchFilters: PeopleFilters) => {
     try {
-      const response = await fetch("/api/people/stats", {
+      const response = await fetch(`/api/organizations/${organizationId}/people/stats`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ filters: searchFilters }),
@@ -275,7 +247,7 @@ export default function SearchPage() {
     setCurrentPage(1);
 
     try {
-      const response = await fetch("/api/people", {
+      const response = await fetch(`/api/organizations/${organizationId}/people/search`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -310,13 +282,13 @@ export default function SearchPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [peopleFilters]);
+  }, [peopleFilters, organizationId]);
 
   const fetchPeoplePage = useCallback(async (page: number) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/people", {
+      const response = await fetch(`/api/organizations/${organizationId}/people/search`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -345,7 +317,7 @@ export default function SearchPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [peopleFilters]);
+  }, [peopleFilters, organizationId]);
 
   const handleSearch = useCallback(() => {
     if (searchMode === "companies") {
@@ -416,8 +388,8 @@ export default function SearchPage() {
   }, [handleSearch, isLoading]);
 
   const totalResults = searchMode === "companies"
-    ? (companyStats?.total ?? companyStats?.total_results ?? 0)
-    : (peopleStats?.total ?? peopleStats?.total_results ?? 0);
+    ? (companyStats?.total_elements ?? companyStats?.total ?? companyStats?.total_results ?? 0)
+    : (peopleStats?.total_elements ?? peopleStats?.total ?? peopleStats?.total_results ?? 0);
 
   const entityLabel = searchMode === "companies" ? "Companies" : "People";
 
@@ -451,12 +423,14 @@ export default function SearchPage() {
                       filters={companyFilters}
                       onChange={setCompanyFilters}
                       onClear={handleClearFilters}
+                      organizationId={organizationId}
                     />
                   ) : (
                     <PeopleFiltersComponent
                       filters={peopleFilters}
                       onChange={setPeopleFilters}
                       onClear={handleClearFilters}
+                      organizationId={organizationId}
                     />
                   )}
                 </div>

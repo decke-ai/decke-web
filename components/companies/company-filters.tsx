@@ -23,6 +23,7 @@ interface CompanyFiltersProps {
   filters: BusinessFilters;
   onChange: (filters: BusinessFilters) => void;
   onClear: () => void;
+  organizationId: string;
 }
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -252,6 +253,7 @@ export function CompanyFilters({
   filters,
   onChange,
   onClear,
+  organizationId,
 }: CompanyFiltersProps) {
   // Track which sections are open (all closed by default)
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
@@ -292,9 +294,9 @@ export function CompanyFilters({
         const params = new URLSearchParams({
           field,
           query: query || " ",
-          ...(semanticSearch && { semantic_search: "true" }),
+          ...(semanticSearch && { semantic: "true" }),
         });
-        const response = await fetch(`/api/companies/autocomplete?${params}`);
+        const response = await fetch(`/api/organizations/${organizationId}/companies/autocomplete?${params}`);
         if (response.ok) {
           const data = await response.json();
           setFilterStates((prev) => ({
@@ -315,7 +317,7 @@ export function CompanyFilters({
         }));
       }
     },
-    []
+    [organizationId]
   );
 
   // Fetch on debounced query change
