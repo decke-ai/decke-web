@@ -15,6 +15,7 @@ import {
   Building,
   Users,
   Coins,
+  Plug,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useAnalytics } from "@/hooks/use-analytics";
@@ -79,7 +80,7 @@ export function AppSidebar() {
   ];
 
   return (
-    <Sidebar collapsible="icon" className="bg-white">
+    <Sidebar collapsible="icon">
       <SidebarHeader className="p-2">
         {/* Collapse button - Notion style */}
         <Tooltip>
@@ -147,15 +148,21 @@ export function AppSidebar() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`/organizations/${organizationId}`}>
-                <Building2 className="mr-2 h-4 w-4" />
-                Organization
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
               <Link href="/credits">
                 <Coins className="mr-2 h-4 w-4" />
                 Credits
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/organizations/${organizationId}/integrations`}>
+                <Plug className="mr-2 h-4 w-4" />
+                Integrations
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/organizations/${organizationId}`}>
+                <Building2 className="mr-2 h-4 w-4" />
+                Organization
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

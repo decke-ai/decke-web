@@ -55,7 +55,7 @@ export function PersonDrawer({ person, open, onOpenChange }: PersonDrawerProps) 
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+      <SheetContent side="right" className="w-full sm:w-[50%] sm:max-w-none overflow-y-auto">
         <SheetHeader className="pb-0">
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16 rounded-lg">

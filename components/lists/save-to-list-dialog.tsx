@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Info, Users, Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -213,6 +214,7 @@ export function SaveToListDialog({
       });
 
       if (!response.ok) {
+        toast.error("Failed to create list");
         return;
       }
 
@@ -221,7 +223,9 @@ export function SaveToListDialog({
       setSelectedListId(newList.id);
       setNewListName("");
       setShowCreateList(false);
+      toast.success("List created successfully");
     } catch {
+      toast.error("Failed to create list");
     } finally {
       setIsCreatingList(false);
     }
@@ -272,14 +276,17 @@ export function SaveToListDialog({
         });
 
         if (!response.ok) {
+          toast.error("Failed to add items to list");
           return;
         }
       }
 
+      toast.success(`${selectedCount} ${entityLabel} saved successfully`);
       onSaveSuccess?.();
       onOpenChange(false);
       resetState();
     } catch {
+      toast.error("Failed to save items");
     } finally {
       setIsSaving(false);
     }

@@ -23,11 +23,11 @@ export async function GET() {
     const domain = email?.split("@")[1];
 
     if (!token) {
-      return NextResponse.json({ exists: false, user: null, organization: null });
+      return NextResponse.json({ exists: false, user: null, organization: null, subscription: null });
     }
 
     if (!domain) {
-      return NextResponse.json({ exists: false, user: null, organization: null });
+      return NextResponse.json({ exists: false, user: null, organization: null, subscription: null });
     }
 
     const orgUrl = `${API_URL}/organizations?domain=${encodeURIComponent(domain)}`;
@@ -43,7 +43,7 @@ export async function GET() {
     });
 
     if (!response.ok) {
-      return NextResponse.json({ exists: false, user: null, organization: null });
+      return NextResponse.json({ exists: false, user: null, organization: null, subscription: null });
     }
 
     const data = await response.json();
@@ -75,6 +75,27 @@ export async function GET() {
         }
       }
 
+      const subscriptionUrl = `${API_URL}/organizations/${org.id}/subscriptions`;
+      const subscriptionResponse = await fetch(subscriptionUrl, {
+        method: "GET",
+        headers,
+      });
+
+      let subscriptionData = null;
+      if (subscriptionResponse.ok) {
+        const subscription = await subscriptionResponse.json();
+        if (subscription) {
+          subscriptionData = {
+            id: subscription.id,
+            status: subscription.status,
+            trial_start: subscription.trial_start,
+            trial_end: subscription.trial_end,
+            current_period_start: subscription.current_period_start,
+            current_period_end: subscription.current_period_end,
+          };
+        }
+      }
+
       return NextResponse.json({
         exists: true,
         user: userData,
@@ -83,11 +104,12 @@ export async function GET() {
           name: org.name,
           domain: org.domain,
           logo: org.avatar,
-        }
+        },
+        subscription: subscriptionData,
       });
     }
 
-    return NextResponse.json({ exists: false, user: null, organization: null });
+    return NextResponse.json({ exists: false, user: null, organization: null, subscription: null });
   } catch (error) {
     console.error("Auth me error:", error);
     return NextResponse.json(

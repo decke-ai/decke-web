@@ -133,10 +133,12 @@ type OnboardingData = {
   icp: string[];
 };
 
+const STRIPE_BILLING_URL = "https://billing.stripe.com/p/login/dRmaEY7sH6rg3jvb583gk00";
+
 export default function OnboardingPage() {
   const router = useRouter();
   const params = useParams();
-  const { isLoading: isAuthLoading, isAuthenticated, refreshUser } = useAuth();
+  const { isLoading: isAuthLoading, isAuthenticated, needsSubscription, refreshUser } = useAuth();
 
   const organizationId = params.organizationId as string;
   const userId = params.userId as string;
@@ -160,6 +162,12 @@ export default function OnboardingPage() {
       window.location.href = "/auth/login";
     }
   }, [isAuthLoading, isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthLoading && isAuthenticated && needsSubscription) {
+      window.location.href = STRIPE_BILLING_URL;
+    }
+  }, [isAuthLoading, isAuthenticated, needsSubscription]);
 
   useEffect(() => {
     if (!isAuthLoading && isAuthenticated && (!organizationId || !userId)) {

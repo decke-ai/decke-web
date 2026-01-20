@@ -26,6 +26,17 @@ export interface BackendUser {
   onboarding: boolean;
 }
 
+export type SubscriptionStatus = "active" | "canceled" | "grace_period" | "past_due" | "trialing";
+
+export interface Subscription {
+  id: string;
+  status: SubscriptionStatus;
+  trial_start?: string | null;
+  trial_end?: string | null;
+  current_period_start?: string | null;
+  current_period_end?: string | null;
+}
+
 export interface Organization {
   id: string;
   name: string;
@@ -37,10 +48,12 @@ interface AuthContextType {
   user: User | null;
   organization: Organization | null;
   backendUser: BackendUser | null;
+  subscription: Subscription | null;
   isLoading: boolean;
   isCheckingBackend: boolean;
   isAuthenticated: boolean;
   needsOnboarding: boolean;
+  needsSubscription: boolean;
   refreshUser: () => Promise<void>;
 }
 
@@ -50,9 +63,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [backendUser, setBackendUser] = useState<BackendUser | null>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingBackend, setIsCheckingBackend] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [needsSubscription, setNeedsSubscription] = useState(false);
   const hasTrackedSignIn = useRef(false);
 
   const checkUserInBackend = useCallback(async () => {
@@ -73,6 +88,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.exists && data.organization) {
         setOrganization(data.organization);
 
+        if (data.subscription) {
+          setSubscription(data.subscription);
+          const hasValidSubscription = data.subscription.status === "active" || data.subscription.status === "trialing";
+          setNeedsSubscription(!hasValidSubscription);
+        } else {
+          setSubscription(null);
+          setNeedsSubscription(true);
+        }
+
         if (data.user) {
           setBackendUser(data.user);
           setNeedsOnboarding(!data.user.onboarding);
@@ -83,12 +107,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setOrganization(null);
         setBackendUser(null);
+        setSubscription(null);
         setNeedsOnboarding(true);
+        setNeedsSubscription(false);
       }
     } catch {
       setOrganization(null);
       setBackendUser(null);
+      setSubscription(null);
       setNeedsOnboarding(true);
+      setNeedsSubscription(false);
     } finally {
       setIsCheckingBackend(false);
     }
@@ -124,21 +152,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(null);
           setOrganization(null);
           setBackendUser(null);
+          setSubscription(null);
           setNeedsOnboarding(false);
+          setNeedsSubscription(false);
           setIsCheckingBackend(false);
         }
       } else {
         setUser(null);
         setOrganization(null);
         setBackendUser(null);
+        setSubscription(null);
         setNeedsOnboarding(false);
+        setNeedsSubscription(false);
         setIsCheckingBackend(false);
       }
     } catch {
       setUser(null);
       setOrganization(null);
       setBackendUser(null);
+      setSubscription(null);
       setNeedsOnboarding(false);
+      setNeedsSubscription(false);
       setIsCheckingBackend(false);
     } finally {
       setIsLoading(false);
@@ -155,10 +189,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         organization,
         backendUser,
+        subscription,
         isLoading,
         isCheckingBackend,
         isAuthenticated: !!user,
         needsOnboarding,
+        needsSubscription,
         refreshUser: loadUser,
       }}
     >

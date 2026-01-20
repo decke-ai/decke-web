@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Loader2, Home, Search, User, Building2, List, LucideIcon, Coins, Building, Users } from "lucide-react";
+import { Loader2, Home, Search, User, Building2, List, LucideIcon, Coins, Building, Users, Plug } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -27,6 +27,7 @@ const PAGE_PATTERNS: PagePattern[] = [
   { pattern: /^\/organizations\/[^/]+\/records\/people$/, config: { title: "People", icon: Users } },
   { pattern: /^\/organizations\/[^/]+\/searches$/, config: { title: "Searches", icon: Search } },
   { pattern: /^\/organizations\/[^/]+\/lists(\/.*)?$/, config: { title: "Lists", icon: List } },
+  { pattern: /^\/organizations\/[^/]+\/integrations$/, config: { title: "Integrations", icon: Plug } },
   { pattern: /^\/organizations\/[^/]+$/, config: { title: "Organization", icon: Building2 } },
 ];
 
@@ -57,10 +58,12 @@ export default function ProtectedLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, isLoading, isCheckingBackend, needsOnboarding, organization, backendUser } = useAuth();
+  const { isAuthenticated, isLoading, isCheckingBackend, needsOnboarding, needsSubscription, organization, backendUser } = useAuth();
 
   const pageConfig = getPageConfig(pathname);
   const PageIcon = pageConfig.icon;
+
+  const STRIPE_BILLING_URL = "https://billing.stripe.com/p/login/dRmaEY7sH6rg3jvb583gk00";
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -74,10 +77,12 @@ export default function ProtectedLayout({
 
     if (!organization) {
       router.replace("/organizations");
+    } else if (needsSubscription) {
+      window.location.href = STRIPE_BILLING_URL;
     } else if (needsOnboarding && backendUser) {
       router.replace(`/organizations/${organization.id}/users/${backendUser.id}/onboardings`);
     }
-  }, [isLoading, isCheckingBackend, isAuthenticated, needsOnboarding, organization, backendUser, router]);
+  }, [isLoading, isCheckingBackend, isAuthenticated, needsOnboarding, needsSubscription, organization, backendUser, router]);
 
   useEffect(() => {
     if (isLoading || isCheckingBackend) return;
@@ -105,7 +110,7 @@ export default function ProtectedLayout({
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset className="h-screen overflow-hidden flex flex-col">
-        <header className="h-14 border-b flex items-center justify-between px-6 flex-shrink-0">
+        <header className="h-14 flex items-center justify-between px-6 flex-shrink-0">
           <div className="flex items-center gap-2">
             <PageIcon className="h-5 w-5 text-muted-foreground" />
             <h1 className="text-lg font-semibold">{pageConfig.title}</h1>
