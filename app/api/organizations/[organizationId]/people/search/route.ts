@@ -10,13 +10,14 @@ const PEOPLE_FILTER_TO_BACKEND_MAP: Record<string, string> = {
   job_title: "person_job_title",
   job_level: "person_job_level",
   job_department: "person_job_department",
-  company_name: "person_company_name",
-  company_domain: "person_company_domain",
-  country: "person_country_name",
+  company_name: "company_name",
+  company_domain: "company_domain",
+  business_id: "company_id",
+  country: "person_country_iso_alpha_2",
   region_country_code: "person_region_name",
   city_region_country: "person_city_name",
-  company_size: "person_company_size",
-  company_revenue: "person_company_revenue",
+  company_size: "company_size",
+  company_revenue: "company_revenue",
 };
 
 function buildFiltersPayload(
@@ -30,6 +31,7 @@ function buildFiltersPayload(
     "job_department",
     "company_name",
     "company_domain",
+    "business_id",
     "country",
     "region_country_code",
     "city_region_country",

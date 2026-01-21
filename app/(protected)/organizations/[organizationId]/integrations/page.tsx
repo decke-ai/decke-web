@@ -69,18 +69,18 @@ export default function IntegrationsPage() {
       <div className="flex-1 min-h-0 border rounded-lg overflow-hidden relative flex flex-col">
         <div className="flex-1 overflow-auto">
           <Table className="w-max min-w-full">
-            <TableHeader className="sticky top-0 z-20 bg-background after:absolute after:left-0 after:bottom-0 after:w-full after:h-px after:bg-border">
+            <TableHeader className="sticky top-0 z-20 bg-card after:absolute after:left-0 after:bottom-0 after:w-full after:h-px after:bg-border">
               <TableRow className="hover:bg-transparent border-b-0">
-                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
+                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-card border-b after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
                   Account
                 </TableHead>
-                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
+                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-card border-b after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
                   Type
                 </TableHead>
-                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
+                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-card border-b after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
                   Status
                 </TableHead>
-                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b">
+                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-card border-b">
                   Connected at
                 </TableHead>
               </TableRow>

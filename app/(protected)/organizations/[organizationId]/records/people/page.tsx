@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { Search, Columns3, Loader2, ChevronLeft, ChevronRight, Users } from "lucide-react";
+import { Search, Columns3, Loader2, ChevronLeft, ChevronRight, Users, Zap } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PeopleTable } from "@/components/people/people-table";
 import { PersonDrawer } from "@/components/people/person-drawer";
+import { EnrichDrawer, PeopleEnrichOptions } from "@/components/records/enrich-drawer";
 import { Empty } from "@/components/ui/empty";
 import { Person } from "@/lib/explorium/types";
 
@@ -40,10 +42,12 @@ interface RecordResponse {
   page_size?: number;
 }
 
-type PeopleColumnId = "name" | "job_title" | "company" | "company_domain" | "company_linkedin" | "location" | "linkedin" | "experiences" | "skills" | "interests";
+import { PeopleColumnId } from "@/components/people/people-table";
 
 const PEOPLE_COLUMNS: { id: PeopleColumnId; label: string }[] = [
   { id: "name", label: "Person Name" },
+  { id: "professional_email", label: "Person Email" },
+  { id: "phone", label: "Person Phone" },
   { id: "company", label: "Company Name" },
   { id: "company_domain", label: "Company Domain" },
   { id: "company_linkedin", label: "Company LinkedIn" },
@@ -98,7 +102,7 @@ export default function PeoplePage() {
   const organizationId = params.organizationId as string;
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [hiddenColumns, setHiddenColumns] = useState<PeopleColumnId[]>([]);
+  const [hiddenColumns, setHiddenColumns] = useState<PeopleColumnId[]>(["professional_email", "phone"]);
   const [isLoading, setIsLoading] = useState(true);
   const [people, setPeople] = useState<Person[]>([]);
   const [totalElements, setTotalElements] = useState(0);
@@ -106,6 +110,7 @@ export default function PeoplePage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isEnrichDrawerOpen, setIsEnrichDrawerOpen] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const fetchPeople = useCallback(async (page: number) => {
@@ -141,6 +146,91 @@ export default function PeoplePage() {
   const handlePersonClick = (person: Person) => {
     setSelectedPerson(person);
     setIsDrawerOpen(true);
+  };
+
+  const [isEnriching, setIsEnriching] = useState(false);
+
+  const handleEnrich = async (options: PeopleEnrichOptions) => {
+    if (!options.email && !options.phone) {
+      toast.error("Please select at least one enrichment option");
+      return;
+    }
+
+    setIsEnriching(true);
+    setIsEnrichDrawerOpen(false);
+
+    try {
+      let enrichmentType: "email" | "phone" | "both" = "both";
+      if (options.email && !options.phone) {
+        enrichmentType = "email";
+      } else if (!options.email && options.phone) {
+        enrichmentType = "phone";
+      }
+
+      const response = await fetch(
+        `/api/organizations/${organizationId}/people/enrichments/contacts`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            person_ids: selectedIds,
+            enrichment_type: enrichmentType,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to enrich contacts");
+      }
+
+      const data = await response.json();
+
+      setPeople((prev) =>
+        prev.map((person) => {
+          const enrichedData = data.contacts?.find(
+            (c: { person_id: string }) => c.person_id === person.id
+          );
+          if (enrichedData) {
+            return {
+              ...person,
+              professional_email: enrichedData.professional_email,
+              professional_email_status: enrichedData.professional_email_status,
+              emails: enrichedData.emails,
+              mobile_phone: enrichedData.mobile_phone,
+              phone_numbers: enrichedData.phone_numbers,
+              email_enriched_date: enrichedData.email_enriched_date,
+              phone_enriched_date: enrichedData.phone_enriched_date,
+            };
+          }
+          return person;
+        })
+      );
+
+      if (options.email && hiddenColumns.includes("professional_email")) {
+        setHiddenColumns((prev) => prev.filter((col) => col !== "professional_email"));
+      }
+      if (options.phone && hiddenColumns.includes("phone")) {
+        setHiddenColumns((prev) => prev.filter((col) => col !== "phone"));
+      }
+
+      const results = [];
+      if (data.total_with_email > 0) {
+        results.push(`${data.total_with_email} with email`);
+      }
+      if (data.total_with_phone > 0) {
+        results.push(`${data.total_with_phone} with phone`);
+      }
+
+      toast.success(
+        `Enrichment completed: ${results.join(", ")} (${data.credits_consumed} credits used)`
+      );
+
+      setSelectedIds([]);
+    } catch {
+      toast.error("Failed to enrich contacts");
+    } finally {
+      setIsEnriching(false);
+    }
   };
 
   const toggleColumn = (columnId: PeopleColumnId) => {
@@ -198,6 +288,16 @@ export default function PeoplePage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {selectedIds.length > 0 && (
+            <Button
+              variant="outline"
+              className="h-9"
+              onClick={() => setIsEnrichDrawerOpen(true)}
+            >
+              <Zap className="h-4 w-4" />
+              Enrichment
+            </Button>
+          )}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -211,9 +311,14 @@ export default function PeoplePage() {
       </div>
 
       <div className="flex-1 min-h-0 border rounded-lg overflow-hidden flex flex-col relative">
-        {isLoading && (
+        {(isLoading || isEnriching) && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-50">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              {isEnriching && (
+                <span className="text-sm text-muted-foreground">Enriching contacts...</span>
+              )}
+            </div>
           </div>
         )}
         <div
@@ -270,6 +375,14 @@ export default function PeoplePage() {
         person={selectedPerson}
         open={isDrawerOpen}
         onOpenChange={setIsDrawerOpen}
+      />
+
+      <EnrichDrawer
+        open={isEnrichDrawerOpen}
+        onOpenChange={setIsEnrichDrawerOpen}
+        recordType="people"
+        selectedCount={selectedIds.length}
+        onEnrich={handleEnrich}
       />
     </div>
   );

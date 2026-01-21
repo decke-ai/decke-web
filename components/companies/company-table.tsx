@@ -95,7 +95,54 @@ type ColumnId =
   | "revenue"
   | "location"
   | "domain"
-  | "linkedin";
+  | "linkedin"
+  | "tech_analytic"
+  | "tech_collaboration"
+  | "tech_communication"
+  | "tech_computer_network"
+  | "tech_customer_management"
+  | "tech_devops"
+  | "tech_ecommerce"
+  | "tech_finance"
+  | "tech_health"
+  | "tech_management"
+  | "tech_marketing"
+  | "tech_operation_management"
+  | "tech_operation_software"
+  | "tech_people"
+  | "tech_platform_storage"
+  | "tech_product_design"
+  | "tech_productivity"
+  | "tech_programming"
+  | "tech_sale"
+  | "tech_security"
+  | "tech_test";
+
+export type CompanyColumnId = ColumnId;
+
+export const TECHNOGRAPHICS_COLUMNS: { id: ColumnId; label: string; field: keyof Business }[] = [
+  { id: "tech_analytic", label: "Tech Analytic", field: "company_technology_analytic" },
+  { id: "tech_collaboration", label: "Tech Collaboration", field: "company_technology_collaboration" },
+  { id: "tech_communication", label: "Tech Communication", field: "company_technology_communication" },
+  { id: "tech_computer_network", label: "Tech Computer Network", field: "company_technology_computer_network" },
+  { id: "tech_customer_management", label: "Tech Customer Management", field: "company_technology_customer_management" },
+  { id: "tech_devops", label: "Tech DevOps", field: "company_technology_devops_and_development" },
+  { id: "tech_ecommerce", label: "Tech E-commerce", field: "company_technology_ecommerce" },
+  { id: "tech_finance", label: "Tech Finance", field: "company_technology_finance_and_accounting" },
+  { id: "tech_health", label: "Tech Health", field: "company_technology_health" },
+  { id: "tech_management", label: "Tech Management", field: "company_technology_management" },
+  { id: "tech_marketing", label: "Tech Marketing", field: "company_technology_marketing" },
+  { id: "tech_operation_management", label: "Tech Operation Management", field: "company_technology_operation_management" },
+  { id: "tech_operation_software", label: "Tech Operation Software", field: "company_technology_operation_software" },
+  { id: "tech_people", label: "Tech People", field: "company_technology_people" },
+  { id: "tech_platform_storage", label: "Tech Platform & Storage", field: "company_technology_platform_and_storage" },
+  { id: "tech_product_design", label: "Tech Product & Design", field: "company_technology_product_and_design" },
+  { id: "tech_productivity", label: "Tech Productivity", field: "company_technology_productivity_and_operation" },
+  { id: "tech_programming", label: "Tech Programming", field: "company_technology_programming_language_and_framework" },
+  { id: "tech_sale", label: "Tech Sale", field: "company_technology_sale" },
+  { id: "tech_security", label: "Tech Security", field: "company_technology_security" },
+  { id: "tech_test", label: "Tech Test", field: "company_technology_test" },
+];
 
 // Format location based on available data
 const formatLocation = (company: Business): string => {
@@ -214,7 +261,7 @@ function SortableHeader({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b",
+        "text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-card border-b",
         column.id === "select" && "px-0",
         isDragging && "bg-muted z-50",
         showSeparator && "after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border"
@@ -277,6 +324,13 @@ export function CompanyTable({
       { id: "location", label: "Company Location", width: 200, minWidth: 120, maxWidth: 350 },
       { id: "domain", label: "Company Domain", width: 150, minWidth: 100, maxWidth: 250 },
       { id: "linkedin", label: "Company LinkedIn", width: 150, minWidth: 100, maxWidth: 250 },
+      ...TECHNOGRAPHICS_COLUMNS.map((col) => ({
+        id: col.id,
+        label: col.label,
+        width: 200,
+        minWidth: 120,
+        maxWidth: 400,
+      })),
     ],
     []
   );
@@ -610,8 +664,30 @@ export function CompanyTable({
           <span className="text-sm">-</span>
         );
       }
-      default:
+      default: {
+        const techColumn = TECHNOGRAPHICS_COLUMNS.find((col) => col.id === columnId);
+        if (techColumn) {
+          const techValues = company[techColumn.field] as string[] | undefined;
+          if (techValues && techValues.length > 0) {
+            return (
+              <div className="flex flex-wrap gap-1 max-w-full overflow-hidden">
+                {techValues.slice(0, 3).map((tech, index) => (
+                  <Badge key={index} variant="secondary" className="text-[10px] whitespace-nowrap rounded-sm">
+                    {tech}
+                  </Badge>
+                ))}
+                {techValues.length > 3 && (
+                  <Badge variant="outline" className="text-[10px] whitespace-nowrap rounded-sm">
+                    +{techValues.length - 3}
+                  </Badge>
+                )}
+              </div>
+            );
+          }
+          return <span className="text-sm text-muted-foreground">-</span>;
+        }
         return null;
+      }
     }
   };
 
@@ -691,7 +767,7 @@ export function CompanyTable({
     >
       <div className="h-full w-full">
         <Table className="w-max min-w-full">
-          <TableHeader className="sticky top-0 z-20 bg-background after:absolute after:left-0 after:bottom-0 after:w-full after:h-px after:bg-border">
+          <TableHeader className="sticky top-0 z-20 bg-card after:absolute after:left-0 after:bottom-0 after:w-full after:h-px after:bg-border">
             <TableRow className="group hover:bg-transparent border-b-0">
               <SortableContext
                 items={visibleColumns.map((c) => c.id)}
@@ -735,7 +811,7 @@ export function CompanyTable({
                         column.id === "select" && "px-0",
                         !column.sticky && "border-r",
                         column.sticky && "sticky",
-                        column.sticky && (isSelected ? "bg-muted" : "bg-background group-hover:bg-muted"),
+                        column.sticky && (isSelected ? "bg-muted" : "bg-card group-hover:bg-muted"),
                         colIndex === visibleColumns.length - 1 && "border-r-0",
                         (column.id === "select" || column.id === "name") && "after:absolute after:right-0 after:top-0 after:h-screen after:w-px after:bg-border"
                       )}

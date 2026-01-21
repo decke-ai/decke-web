@@ -14,6 +14,8 @@ import {
   History,
   Lightbulb,
   Heart,
+  Mail,
+  Phone,
 } from "lucide-react";
 import {
   DndContext,
@@ -137,7 +139,11 @@ type ColumnId =
   | "linkedin"
   | "experiences"
   | "skills"
-  | "interests";
+  | "interests"
+  | "professional_email"
+  | "phone";
+
+export type { ColumnId as PeopleColumnId };
 
 const formatLocation = (person: Person): string => {
   const city = person.city;
@@ -250,7 +256,7 @@ function SortableHeader({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b",
+        "text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-card border-b",
         column.id === "select" && "px-0",
         isDragging && "bg-muted z-50",
         showSeparator && "after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border"
@@ -303,6 +309,8 @@ export function PeopleTable({
     () => [
       { id: "select", label: "", width: 40, minWidth: 40, maxWidth: 40, sticky: true, stickyOffset: 0 },
       { id: "name", label: "Person Name", width: 200, minWidth: 150, maxWidth: 400, sticky: true, stickyOffset: 40 },
+      { id: "professional_email", label: "Person Email", width: 220, minWidth: 150, maxWidth: 350 },
+      { id: "phone", label: "Person Phone", width: 150, minWidth: 120, maxWidth: 250 },
       { id: "job_title", label: "Person Job Title", width: 180, minWidth: 120, maxWidth: 300 },
       { id: "company", label: "Company Name", width: 180, minWidth: 120, maxWidth: 300 },
       { id: "company_domain", label: "Company Domain", width: 150, minWidth: 100, maxWidth: 250 },
@@ -656,6 +664,36 @@ export function PeopleTable({
         const interests = person.interests || person.interest || person.topics_of_interest || person.personal_interests || [];
         return <BadgeList items={interests} />;
       }
+      case "professional_email": {
+        const email = person.professional_email || person.email;
+        return email ? (
+          <a
+            href={`mailto:${email}`}
+            className="flex items-center gap-1.5 text-sm text-primary hover:underline cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Mail className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate">{email}</span>
+          </a>
+        ) : (
+          <span className="text-muted-foreground text-sm">-</span>
+        );
+      }
+      case "phone": {
+        const phone = person.mobile_phone || person.phone || person.phone_numbers?.[0]?.phone_number;
+        return phone ? (
+          <a
+            href={`tel:${phone}`}
+            className="flex items-center gap-1.5 text-sm text-primary hover:underline cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Phone className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate">{phone}</span>
+          </a>
+        ) : (
+          <span className="text-muted-foreground text-sm">-</span>
+        );
+      }
       default:
         return null;
     }
@@ -674,6 +712,10 @@ export function PeopleTable({
     switch (columnId) {
       case "name":
         return <Type className={iconClass} />;
+      case "professional_email":
+        return <Mail className={iconClass} />;
+      case "phone":
+        return <Phone className={iconClass} />;
       case "job_title":
         return <Briefcase className={iconClass} />;
       case "company":
@@ -741,7 +783,7 @@ export function PeopleTable({
     >
       <div className="h-full w-full">
         <Table className="w-max min-w-full">
-          <TableHeader className="sticky top-0 z-20 bg-background after:absolute after:left-0 after:bottom-0 after:w-full after:h-px after:bg-border">
+          <TableHeader className="sticky top-0 z-20 bg-card after:absolute after:left-0 after:bottom-0 after:w-full after:h-px after:bg-border">
             <TableRow className="group hover:bg-transparent border-b-0">
               <SortableContext
                 items={visibleColumns.map((c) => c.id)}
@@ -785,7 +827,7 @@ export function PeopleTable({
                         column.id === "select" && "px-0",
                         !column.sticky && "border-r",
                         column.sticky && "sticky",
-                        column.sticky && (isSelected ? "bg-muted" : "bg-background group-hover:bg-muted"),
+                        column.sticky && (isSelected ? "bg-muted" : "bg-card group-hover:bg-muted"),
                         colIndex === visibleColumns.length - 1 && "border-r-0",
                         (column.id === "select" || column.id === "name") && "after:absolute after:right-0 after:top-0 after:h-screen after:w-px after:bg-border"
                       )}

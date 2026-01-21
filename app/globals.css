@@ -49,7 +49,7 @@
   --radius: 0.625rem;
   --background: #f7f6f2;
   --foreground: #30302f;
-  --card: oklch(1 0 0);
+  --card: #f2f1ed;
   --card-foreground: #30302f;
   --popover: oklch(1 0 0);
   --popover-foreground: #30302f;
@@ -62,7 +62,7 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: #30302f;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: #e4e4e7;
+  --border: #31302e08;
   --input: #e4e4e7;
   --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.646 0.222 41.116);
@@ -121,7 +121,33 @@
   body {
     @apply bg-background text-foreground;
   }
-  button {
+  button,
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"],
+  [role="option"],
+  [role="checkbox"],
+  [role="radio"],
+  [role="switch"],
+  [role="link"],
+  a[href],
+  input[type="checkbox"],
+  input[type="radio"],
+  select,
+  label[for],
+  summary,
+  [data-slot="trigger"],
+  [data-state] {
     @apply cursor-pointer;
+  }
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  textarea {
+    @apply cursor-text;
   }
 }

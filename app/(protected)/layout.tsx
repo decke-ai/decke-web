@@ -1,16 +1,29 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Loader2, Home, Search, User, Building2, List, LucideIcon, Coins, Building, Users, Plug } from "lucide-react";
+import { Loader2, Home, Search, User, Building2, List, LucideIcon, Coins, Building, Users, Plug, CreditCard } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
+interface BillingData {
+  subscription: {
+    id: string;
+    status: string;
+    plan_id: string;
+  } | null;
+  plan: {
+    id: string;
+    name: string;
+    monthly_credit: number;
+  } | null;
+}
 
 interface PageConfig {
   title: string;
@@ -28,6 +41,7 @@ const PAGE_PATTERNS: PagePattern[] = [
   { pattern: /^\/organizations\/[^/]+\/searches$/, config: { title: "Searches", icon: Search } },
   { pattern: /^\/organizations\/[^/]+\/lists(\/.*)?$/, config: { title: "Lists", icon: List } },
   { pattern: /^\/organizations\/[^/]+\/integrations$/, config: { title: "Integrations", icon: Plug } },
+  { pattern: /^\/organizations\/[^/]+\/billing$/, config: { title: "Billing", icon: CreditCard } },
   { pattern: /^\/organizations\/[^/]+$/, config: { title: "Organization", icon: Building2 } },
 ];
 
@@ -64,6 +78,32 @@ export default function ProtectedLayout({
   const PageIcon = pageConfig.icon;
 
   const STRIPE_BILLING_URL = "https://billing.stripe.com/p/login/dRmaEY7sH6rg3jvb583gk00";
+
+  const [billingData, setBillingData] = useState<BillingData | null>(null);
+
+  useEffect(() => {
+    async function fetchBillingData() {
+      if (!organization?.id) return;
+
+      try {
+        const response = await fetch(`/api/organizations/${organization.id}/billing`);
+        if (response.ok) {
+          const data = await response.json();
+          setBillingData(data);
+        }
+      } catch {
+        // Silent fail
+      }
+    }
+
+    if (organization?.id) {
+      fetchBillingData();
+    }
+  }, [organization?.id]);
+
+  const creditsUsed = 0;
+  const creditsTotal = billingData?.plan?.monthly_credit || 0;
+  const creditsRemaining = creditsTotal - creditsUsed;
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -120,14 +160,14 @@ export default function ProtectedLayout({
               <div className="flex items-center gap-2 text-sm text-muted-foreground cursor-default border rounded-lg px-3 h-9">
                 <Coins className="h-4 w-4" />
                 <span>
-                  <span className="font-medium text-foreground">8.500</span>
+                  <span className="font-medium text-foreground">{creditsRemaining.toLocaleString("en-US")}</span>
                   <span className="mx-1">/</span>
-                  <span>10.000</span>
+                  <span>{creditsTotal.toLocaleString("en-US")}</span>
                 </span>
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              <p>8.500 credits used of 10.000 available</p>
+              <p>{creditsRemaining.toLocaleString("en-US")} credits remaining of {creditsTotal.toLocaleString("en-US")} available</p>
             </TooltipContent>
           </Tooltip>
         </header>

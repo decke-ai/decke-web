@@ -41,6 +41,28 @@ export interface Business {
   business_type?: string;
   linkedin_company_url?: string;
   linkedin_industry_category?: string;
+  // Technographics enrichment fields
+  company_technology_analytic?: string[];
+  company_technology_collaboration?: string[];
+  company_technology_communication?: string[];
+  company_technology_computer_network?: string[];
+  company_technology_customer_management?: string[];
+  company_technology_devops_and_development?: string[];
+  company_technology_ecommerce?: string[];
+  company_technology_finance_and_accounting?: string[];
+  company_technology_health?: string[];
+  company_technology_management?: string[];
+  company_technology_marketing?: string[];
+  company_technology_operation_management?: string[];
+  company_technology_operation_software?: string[];
+  company_technology_people?: string[];
+  company_technology_platform_and_storage?: string[];
+  company_technology_product_and_design?: string[];
+  company_technology_productivity_and_operation?: string[];
+  company_technology_programming_language_and_framework?: string[];
+  company_technology_sale?: string[];
+  company_technology_security?: string[];
+  company_technology_test?: string[];
 }
 
 // BusinessFilters uses the same field names as the autocomplete API
@@ -143,6 +165,15 @@ export interface AutocompleteResponse {
 }
 
 // Person types for People search (internally we use Person/People, Explorium uses Prospect)
+export interface PersonEmail {
+  address: string;
+  type?: string | null;
+}
+
+export interface PersonPhone {
+  phone_number: string;
+}
+
 export interface Person {
   prospect_id?: string;
   id?: string;
@@ -186,6 +217,13 @@ export interface Person {
   interest?: string[];
   topics_of_interest?: string[];
   personal_interests?: string[];
+  // Contact enrichment fields
+  professional_email?: string | null;
+  professional_email_status?: string | null;
+  emails?: PersonEmail[] | null;
+  phone_numbers?: PersonPhone[] | null;
+  email_enriched_date?: string | null;
+  phone_enriched_date?: string | null;
 }
 
 // Alias for Explorium API compatibility
@@ -370,7 +408,7 @@ export const AUTOCOMPLETE_FIELD_TO_BACKEND_MAP: Record<string, string> = {
   company_size: "company_size",
   company_revenue: "company_revenue",
   company_age: "company_age",
-  number_of_locations: "company_locations",
+  number_of_locations: "company_location",
   job_title: "person_job_title",
   job_department: "person_job_department",
   job_level: "person_job_level",

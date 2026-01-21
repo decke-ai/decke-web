@@ -16,6 +16,7 @@ import {
   Users,
   Coins,
   Plug,
+  CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useAnalytics } from "@/hooks/use-analytics";
@@ -145,6 +146,12 @@ export function AppSidebar() {
               <Link href="/account">
                 <User className="mr-2 h-4 w-4" />
                 Account
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/organizations/${organizationId}/billing`}>
+                <CreditCard className="mr-2 h-4 w-4" />
+                Billing
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>

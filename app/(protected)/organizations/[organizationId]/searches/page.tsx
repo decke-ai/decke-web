@@ -498,7 +498,7 @@ export default function SearchPage() {
                   className={cn(
                     "flex items-center justify-center gap-2 rounded-md px-3 py-1 text-sm font-medium transition-colors",
                     searchMode === "companies"
-                      ? "bg-background shadow-sm"
+                      ? "bg-[#30302f] text-white shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
@@ -510,7 +510,7 @@ export default function SearchPage() {
                   className={cn(
                     "flex items-center justify-center gap-2 rounded-md px-3 py-1 text-sm font-medium transition-colors",
                     searchMode === "people"
-                      ? "bg-background shadow-sm"
+                      ? "bg-[#30302f] text-white shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >

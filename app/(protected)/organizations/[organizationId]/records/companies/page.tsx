@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { Columns3, Loader2, ChevronLeft, ChevronRight, Building2 } from "lucide-react";
+import { Columns3, Loader2, ChevronLeft, ChevronRight, Building2, Zap } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -11,10 +12,36 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CompanyTable } from "@/components/companies/company-table";
+import { CompanyTable, TECHNOGRAPHICS_COLUMNS, CompanyColumnId } from "@/components/companies/company-table";
 import { CompanyDrawer } from "@/components/companies/company-drawer";
+import { EnrichDrawer, CompanyEnrichOptions } from "@/components/records/enrich-drawer";
 import { Empty } from "@/components/ui/empty";
 import { Business } from "@/lib/explorium/types";
+
+interface CompanyTechnographics {
+  company_id: string;
+  company_technology_analytic?: string[] | null;
+  company_technology_collaboration?: string[] | null;
+  company_technology_communication?: string[] | null;
+  company_technology_computer_network?: string[] | null;
+  company_technology_customer_management?: string[] | null;
+  company_technology_devops_and_development?: string[] | null;
+  company_technology_ecommerce?: string[] | null;
+  company_technology_finance_and_accounting?: string[] | null;
+  company_technology_health?: string[] | null;
+  company_technology_management?: string[] | null;
+  company_technology_marketing?: string[] | null;
+  company_technology_operation_management?: string[] | null;
+  company_technology_operation_software?: string[] | null;
+  company_technology_people?: string[] | null;
+  company_technology_platform_and_storage?: string[] | null;
+  company_technology_product_and_design?: string[] | null;
+  company_technology_productivity_and_operation?: string[] | null;
+  company_technology_programming_language_and_framework?: string[] | null;
+  company_technology_sale?: string[] | null;
+  company_technology_security?: string[] | null;
+  company_technology_test?: string[] | null;
+}
 
 interface RecordResponse {
   content?: Array<{
@@ -39,8 +66,6 @@ interface RecordResponse {
   page_size?: number;
 }
 
-type CompanyColumnId = "name" | "description" | "industry" | "employees" | "revenue" | "location" | "domain" | "linkedin";
-
 const COMPANY_COLUMNS: { id: CompanyColumnId; label: string }[] = [
   { id: "name", label: "Company Name" },
   { id: "description", label: "Company Description" },
@@ -50,6 +75,7 @@ const COMPANY_COLUMNS: { id: CompanyColumnId; label: string }[] = [
   { id: "linkedin", label: "Company LinkedIn" },
   { id: "location", label: "Company Location" },
   { id: "revenue", label: "Company Revenue" },
+  ...TECHNOGRAPHICS_COLUMNS.map((col) => ({ id: col.id, label: col.label })),
 ];
 
 function mapRecordToCompany(record: {
@@ -111,6 +137,7 @@ export default function CompaniesPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedCompany, setSelectedCompany] = useState<Business | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isEnrichDrawerOpen, setIsEnrichDrawerOpen] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const fetchCompanies = useCallback(async (page: number) => {
@@ -146,6 +173,86 @@ export default function CompaniesPage() {
   const handleCompanyClick = (company: Business) => {
     setSelectedCompany(company);
     setIsDrawerOpen(true);
+  };
+
+  const [isEnriching, setIsEnriching] = useState(false);
+
+  const handleEnrich = async (options: CompanyEnrichOptions) => {
+    if (!options.technographics && !options.fundingAcquisition) {
+      toast.error("Please select at least one enrichment option");
+      return;
+    }
+
+    setIsEnriching(true);
+    setIsEnrichDrawerOpen(false);
+
+    try {
+      if (options.technographics) {
+        const response = await fetch(
+          `/api/organizations/${organizationId}/companies/enrichments/technographics`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ company_ids: selectedIds }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to enrich technographics");
+        }
+
+        const data = await response.json();
+
+        setCompanies((prev) =>
+          prev.map((company) => {
+            const enrichedData = data.companies?.find(
+              (c: CompanyTechnographics) => c.company_id === company.id
+            );
+            if (enrichedData) {
+              return {
+                ...company,
+                company_technology_analytic: enrichedData.company_technology_analytic || [],
+                company_technology_collaboration: enrichedData.company_technology_collaboration || [],
+                company_technology_communication: enrichedData.company_technology_communication || [],
+                company_technology_computer_network: enrichedData.company_technology_computer_network || [],
+                company_technology_customer_management: enrichedData.company_technology_customer_management || [],
+                company_technology_devops_and_development: enrichedData.company_technology_devops_and_development || [],
+                company_technology_ecommerce: enrichedData.company_technology_ecommerce || [],
+                company_technology_finance_and_accounting: enrichedData.company_technology_finance_and_accounting || [],
+                company_technology_health: enrichedData.company_technology_health || [],
+                company_technology_management: enrichedData.company_technology_management || [],
+                company_technology_marketing: enrichedData.company_technology_marketing || [],
+                company_technology_operation_management: enrichedData.company_technology_operation_management || [],
+                company_technology_operation_software: enrichedData.company_technology_operation_software || [],
+                company_technology_people: enrichedData.company_technology_people || [],
+                company_technology_platform_and_storage: enrichedData.company_technology_platform_and_storage || [],
+                company_technology_product_and_design: enrichedData.company_technology_product_and_design || [],
+                company_technology_productivity_and_operation: enrichedData.company_technology_productivity_and_operation || [],
+                company_technology_programming_language_and_framework: enrichedData.company_technology_programming_language_and_framework || [],
+                company_technology_sale: enrichedData.company_technology_sale || [],
+                company_technology_security: enrichedData.company_technology_security || [],
+                company_technology_test: enrichedData.company_technology_test || [],
+              };
+            }
+            return company;
+          })
+        );
+
+        toast.success(
+          `Enrichment completed: ${data.total_with_data} of ${data.total_requested} companies enriched (${data.credits_consumed} credits used)`
+        );
+      }
+
+      if (options.fundingAcquisition) {
+        toast.info("Funding and acquisition enrichment coming soon");
+      }
+
+      setSelectedIds([]);
+    } catch {
+      toast.error("Failed to enrich companies");
+    } finally {
+      setIsEnriching(false);
+    }
   };
 
   const toggleColumn = (columnId: CompanyColumnId) => {
@@ -193,12 +300,30 @@ export default function CompaniesPage() {
             </span>
           )}
         </div>
+
+        <div className="flex items-center gap-3">
+          {selectedIds.length > 0 && (
+            <Button
+              variant="outline"
+              className="h-9"
+              onClick={() => setIsEnrichDrawerOpen(true)}
+            >
+              <Zap className="h-4 w-4" />
+              Enrichment
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 min-h-0 border rounded-lg overflow-hidden flex flex-col relative">
-        {isLoading && (
+        {(isLoading || isEnriching) && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-50">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              {isEnriching && (
+                <span className="text-sm text-muted-foreground">Enriching companies...</span>
+              )}
+            </div>
           </div>
         )}
         <div
@@ -255,6 +380,14 @@ export default function CompaniesPage() {
         company={selectedCompany}
         open={isDrawerOpen}
         onOpenChange={setIsDrawerOpen}
+      />
+
+      <EnrichDrawer
+        open={isEnrichDrawerOpen}
+        onOpenChange={setIsEnrichDrawerOpen}
+        recordType="companies"
+        selectedCount={selectedIds.length}
+        onEnrich={handleEnrich}
       />
     </div>
   );

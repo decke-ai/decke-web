@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { BarChart3, CreditCard } from "lucide-react";
+import { useState, useEffect } from "react";
+import { BarChart3, CreditCard, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -19,17 +19,39 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/components/ui/card";
+import { useAuth, SubscriptionStatus } from "@/contexts/auth-context";
 
 type TabType = "usage" | "analytics";
 type PeriodType = "week" | "month" | "year";
 
-interface PlanInfo {
+interface Plan {
+  id: string;
   name: string;
-  cycleStart: string;
-  cycleEnd: string;
-  status: "ACTIVATED" | "INACTIVE" | "PENDING";
-  creditsUsed: number;
-  creditsTotal: number;
+  description?: string;
+  features: string[];
+  monthly_credit: number;
+  monthly_price: number;
+}
+
+interface Subscription {
+  id: string;
+  status: SubscriptionStatus;
+  plan_id: string;
+  trial_start?: string | null;
+  trial_end?: string | null;
+  current_period_start?: string | null;
+  current_period_end?: string | null;
+}
+
+interface BillingData {
+  subscription: Subscription | null;
+  plan: Plan | null;
 }
 
 interface ConsumptionRecord {
@@ -41,71 +63,61 @@ interface ConsumptionRecord {
   expiresAt?: string;
 }
 
-const mockPlanInfo: PlanInfo = {
-  name: "Growth",
-  cycleStart: "October 29",
-  cycleEnd: "November 28",
-  status: "ACTIVATED",
-  creditsUsed: 8500,
-  creditsTotal: 10000,
-};
-
-const mockConsumptionHistory: ConsumptionRecord[] = [
-  {
-    id: "1",
-    transaction: "Plan credits",
-    date: "15/09/2025",
-    category: "Load",
-    amount: 10000,
-    expiresAt: "15/09/2026",
-  },
-  {
-    id: "2",
-    transaction: "Bundle credit",
-    date: "10/09/2025",
-    category: "Load",
-    amount: 500,
-  },
-  {
-    id: "3",
-    transaction: "Company search",
-    date: "08/09/2025",
-    category: "Company",
-    amount: -150,
-  },
-  {
-    id: "4",
-    transaction: "People search",
-    date: "05/09/2025",
-    category: "People",
-    amount: -200,
-  },
-  {
-    id: "5",
-    transaction: "AI enrichment",
-    date: "01/09/2025",
-    category: "AI Tokens",
-    amount: -75,
-  },
-];
+const mockConsumptionHistory: ConsumptionRecord[] = [];
 
 const mockMonthlyData = [
-  { month: "01/24", company: 2000, people: 3000, aiTokens: 1500 },
-  { month: "02/24", company: 2500, people: 4000, aiTokens: 2000 },
-  { month: "03/24", company: 3000, people: 5000, aiTokens: 2500 },
-  { month: "04/24", company: 2800, people: 4500, aiTokens: 2200 },
-  { month: "05/24", company: 3500, people: 5500, aiTokens: 3000 },
-  { month: "06/24", company: 4000, people: 6000, aiTokens: 3500 },
-  { month: "07/24", company: 4500, people: 7000, aiTokens: 4000 },
-  { month: "08/24", company: 5000, people: 8000, aiTokens: 4500 },
-  { month: "09/24", company: 4800, people: 7500, aiTokens: 4200 },
-  { month: "10/24", company: 5500, people: 8500, aiTokens: 5000 },
-  { month: "11/24", company: 6000, people: 9000, aiTokens: 5500 },
-  { month: "12/24", company: 6500, people: 9500, aiTokens: 6000 },
+  { month: "01/24", company: 0, people: 0, aiTokens: 0 },
+  { month: "02/24", company: 0, people: 0, aiTokens: 0 },
+  { month: "03/24", company: 0, people: 0, aiTokens: 0 },
+  { month: "04/24", company: 0, people: 0, aiTokens: 0 },
+  { month: "05/24", company: 0, people: 0, aiTokens: 0 },
+  { month: "06/24", company: 0, people: 0, aiTokens: 0 },
+  { month: "07/24", company: 0, people: 0, aiTokens: 0 },
+  { month: "08/24", company: 0, people: 0, aiTokens: 0 },
+  { month: "09/24", company: 0, people: 0, aiTokens: 0 },
+  { month: "10/24", company: 0, people: 0, aiTokens: 0 },
+  { month: "11/24", company: 0, people: 0, aiTokens: 0 },
+  { month: "12/24", company: 0, people: 0, aiTokens: 0 },
 ];
 
+function formatDate(dateString: string | null | undefined): string {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatCredits(credits: number): string {
+  return credits.toLocaleString("en-US");
+}
+
+function getStatusLabel(status: SubscriptionStatus): string {
+  const labels: Record<SubscriptionStatus, string> = {
+    active: "ACTIVE",
+    trialing: "TRIAL",
+    canceled: "CANCELED",
+    past_due: "PAST DUE",
+    grace_period: "GRACE PERIOD",
+  };
+  return labels[status] || status.toUpperCase();
+}
+
+function getStatusClassName(status: SubscriptionStatus): string {
+  const classes: Record<SubscriptionStatus, string> = {
+    active: "bg-green-100 text-green-700",
+    trialing: "bg-blue-100 text-blue-700",
+    canceled: "bg-gray-100 text-gray-700",
+    past_due: "bg-red-100 text-red-700",
+    grace_period: "bg-yellow-100 text-yellow-700",
+  };
+  return classes[status] || "bg-gray-100 text-gray-700";
+}
+
 function BarChart({ data }: { data: typeof mockMonthlyData }) {
-  const maxValue = Math.max(...data.map(d => d.company + d.people + d.aiTokens));
+  const maxValue = Math.max(...data.map(d => d.company + d.people + d.aiTokens), 1);
   const chartHeight = 200;
 
   return (
@@ -162,15 +174,60 @@ function BarChart({ data }: { data: typeof mockMonthlyData }) {
 }
 
 export default function CreditsPage() {
+  const { organization } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>("usage");
   const [chartPeriod, setChartPeriod] = useState<PeriodType>("year");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterPeriod, setFilterPeriod] = useState<string>("30");
+  const [billingData, setBillingData] = useState<BillingData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchBillingData() {
+      if (!organization?.id) return;
+
+      try {
+        const response = await fetch(`/api/organizations/${organization.id}/billing`);
+        if (response.ok) {
+          const data = await response.json();
+          setBillingData(data);
+        }
+      } catch {
+        // Silent fail
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchBillingData();
+  }, [organization?.id]);
 
   const filteredHistory = mockConsumptionHistory.filter((record) => {
     if (filterCategory === "all") return true;
     return record.category.toLowerCase() === filterCategory.toLowerCase();
   });
+
+  const subscription = billingData?.subscription;
+  const plan = billingData?.plan;
+
+  const creditsUsed = 0;
+  const creditsTotal = plan?.monthly_credit || 0;
+  const creditsRemaining = creditsTotal - creditsUsed;
+
+  const periodStart = subscription?.status === "trialing"
+    ? subscription.trial_start
+    : subscription?.current_period_start;
+  const periodEnd = subscription?.status === "trialing"
+    ? subscription.trial_end
+    : subscription?.current_period_end;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-full p-6 overflow-auto">
@@ -203,54 +260,69 @@ export default function CreditsPage() {
         </div>
 
         {activeTab === "usage" && (
-          <div className="border rounded-lg p-6 space-y-6">
-            <h2 className="text-lg font-semibold text-primary">Credits Usage</h2>
+          <Card>
+            <CardHeader>
+              <CardTitle>Credits Usage</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-start gap-16 pb-6 border-b">
+                <div>
+                  <p className="text-sm text-muted-foreground">Plan</p>
+                  <p className="text-xl font-semibold">{plan?.name || "No plan"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Cycle</p>
+                  <p className="text-xl font-semibold">
+                    {periodStart && periodEnd
+                      ? `${formatDate(periodStart)} – ${formatDate(periodEnd)}`
+                      : "–"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Status</p>
+                  {subscription ? (
+                    <span className={cn(
+                      "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mt-1",
+                      getStatusClassName(subscription.status)
+                    )}>
+                      {getStatusLabel(subscription.status)}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mt-1 bg-gray-100 text-gray-700">
+                      NO SUBSCRIPTION
+                    </span>
+                  )}
+                </div>
+              </div>
 
-            <div className="flex items-start gap-16 pb-6 border-b">
-              <div>
-                <p className="text-sm text-muted-foreground">Plan</p>
-                <p className="text-xl font-semibold">{mockPlanInfo.name}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Cycle</p>
-                <p className="text-xl font-semibold">{mockPlanInfo.cycleStart} – {mockPlanInfo.cycleEnd}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Status</p>
-                <span className={cn(
-                  "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mt-1",
-                  mockPlanInfo.status === "ACTIVATED" && "bg-green-100 text-green-700",
-                  mockPlanInfo.status === "INACTIVE" && "bg-gray-100 text-gray-700",
-                  mockPlanInfo.status === "PENDING" && "bg-yellow-100 text-yellow-700"
-                )}>
-                  {mockPlanInfo.status}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">Plan credits</p>
-                <p className="text-sm text-muted-foreground">
-                  {mockPlanInfo.creditsUsed.toLocaleString("pt-BR")} of {mockPlanInfo.creditsTotal.toLocaleString("pt-BR")}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">Plan credits</p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatCredits(creditsUsed)} of {formatCredits(creditsTotal)}
+                  </p>
+                </div>
+                <Progress
+                  value={creditsTotal > 0 ? (creditsUsed / creditsTotal) * 100 : 0}
+                  className="h-2"
+                />
+                <p className="text-xl font-semibold">
+                  {formatCredits(creditsRemaining)} remaining
                 </p>
               </div>
-              <Progress
-                value={(mockPlanInfo.creditsUsed / mockPlanInfo.creditsTotal) * 100}
-                className="h-2"
-              />
-              <p className="text-xl font-semibold">
-                {(mockPlanInfo.creditsTotal - mockPlanInfo.creditsUsed).toLocaleString("pt-BR")} remaining
-              </p>
-            </div>
 
-            <div className="border rounded-lg p-6 mt-6">
-              <h3 className="text-lg font-semibold text-primary mb-3">Credit bundles</h3>
-              <p className="text-muted-foreground">
-                A flexible credit bundles for your needs. Buy credits to enrich data so you can use it whenever you need to. Bundle credits expire after 3 months.
-              </p>
-            </div>
-          </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Credit bundles</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    A flexible credit bundles for your needs. Buy credits to enrich data so you can use it whenever you need to. Bundle credits expire after 3 months.
+                  </p>
+                </CardContent>
+              </Card>
+            </CardContent>
+          </Card>
         )}
 
         {activeTab === "analytics" && (
@@ -294,9 +366,11 @@ export default function CreditsPage() {
               </div>
             </div>
 
-            <div className="border rounded-lg p-6">
-              <BarChart data={mockMonthlyData} />
-            </div>
+            <Card>
+              <CardContent className="pt-6">
+                <BarChart data={mockMonthlyData} />
+              </CardContent>
+            </Card>
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -329,7 +403,7 @@ export default function CreditsPage() {
                 </div>
               </div>
 
-              <div className="border rounded-lg overflow-hidden">
+              <Card className="overflow-hidden">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -371,7 +445,7 @@ export default function CreditsPage() {
                                 "font-medium",
                                 record.amount > 0 ? "text-green-600" : ""
                               )}>
-                                {record.amount > 0 ? "+" : ""}{record.amount.toLocaleString("pt-BR")}
+                                {record.amount > 0 ? "+" : ""}{record.amount.toLocaleString("en-US")}
                               </p>
                               {record.expiresAt && (
                                 <p className="text-xs text-muted-foreground">
@@ -385,7 +459,7 @@ export default function CreditsPage() {
                     )}
                   </TableBody>
                 </Table>
-              </div>
+              </Card>
             </div>
           </div>
         )}

@@ -201,7 +201,7 @@ export default function ListsPage() {
               className={cn(
                 "flex items-center justify-center gap-2 rounded-md px-3 py-1 text-sm font-medium transition-colors",
                 listMode === "companies"
-                  ? "bg-background shadow-sm"
+                  ? "bg-[#30302f] text-white shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -213,7 +213,7 @@ export default function ListsPage() {
               className={cn(
                 "flex items-center justify-center gap-2 rounded-md px-3 py-1 text-sm font-medium transition-colors",
                 listMode === "people"
-                  ? "bg-background shadow-sm"
+                  ? "bg-[#30302f] text-white shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -272,9 +272,9 @@ export default function ListsPage() {
         )}
         <div className="flex-1 overflow-auto">
           <Table className="w-max min-w-full">
-            <TableHeader className="sticky top-0 z-20 bg-background after:absolute after:left-0 after:bottom-0 after:w-full after:h-px after:bg-border">
+            <TableHeader className="sticky top-0 z-20 bg-card after:absolute after:left-0 after:bottom-0 after:w-full after:h-px after:bg-border">
               <TableRow className="hover:bg-transparent border-b-0">
-                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b w-10 px-0 after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
+                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-card border-b w-10 px-0 after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
                   <div className="flex items-center justify-center w-full">
                     <Checkbox
                       checked={allSelected ? true : someSelected ? "indeterminate" : false}
@@ -283,31 +283,31 @@ export default function ListsPage() {
                     />
                   </div>
                 </TableHead>
-                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
+                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-card border-b after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
                   <span className="flex items-center gap-1.5">
                     <Type className="h-3 w-3" />
                     Name
                   </span>
                 </TableHead>
-                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
+                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-card border-b after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
                   <span className="flex items-center gap-1.5">
                     <Calendar className="h-3 w-3" />
                     Creation date
                   </span>
                 </TableHead>
-                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
+                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-card border-b after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
                   <span className="flex items-center gap-1.5">
                     <Calendar className="h-3 w-3" />
                     Last update
                   </span>
                 </TableHead>
-                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
+                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-card border-b after:absolute after:right-0 after:top-0 after:h-full after:w-px after:bg-border">
                   <span className="flex items-center gap-1.5">
                     <UserCircle2 className="h-3 w-3" />
                     Owner
                   </span>
                 </TableHead>
-                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-background border-b w-12">
+                <TableHead className="text-sm font-medium text-muted-foreground whitespace-nowrap relative bg-card border-b w-12">
                   <span className="flex items-center gap-1.5">
                     <Settings className="h-3 w-3" />
                     Actions
@@ -318,7 +318,7 @@ export default function ListsPage() {
             <TableBody>
               {filteredLists.length === 0 && !isLoading ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={6} className="h-[calc(100vh-220px)] align-middle">
+                  <TableCell colSpan={6} className="h-[calc(100vh-220px)] align-middle bg-card">
                     <div className="flex flex-col items-center justify-center gap-3 h-full">
                       <ListIcon className="h-8 w-8 text-muted-foreground" />
                       <div className="text-center">
