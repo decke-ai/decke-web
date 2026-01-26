@@ -8,12 +8,11 @@ const API_URL = process.env.API_URL || "https://api.decke.ai";
 
 function buildFiltersPayload(
   filters: BusinessFilters
-): Record<string, { values?: string[] } | { min?: number; max?: number }> {
-  const payload: Record<string, { values?: string[] } | { min?: number; max?: number }> = {};
+): Record<string, string[]> {
+  const payload: Record<string, string[]> = {};
 
   const arrayFilterFields: (keyof BusinessFilters)[] = [
     "country",
-    "city_region_country",
     "google_category",
     "naics_category",
     "linkedin_category",
@@ -23,30 +22,18 @@ function buildFiltersPayload(
     "company_age",
     "company_tech_stack_tech",
     "company_tech_stack_categories",
-    "job_title",
-    "job_department",
-    "job_level",
-    "business_intent_topics",
-    "domain",
   ];
 
   for (const field of arrayFilterFields) {
     const values = filters[field] as string[] | undefined;
     if (values?.length) {
       const searchApiField = FILTER_TO_SEARCH_API_MAP[field] || field;
-      payload[searchApiField] = { values };
+      payload[searchApiField] = values;
     }
   }
 
-  if (filters.founded_year_min || filters.founded_year_max) {
-    payload.founded_year = {
-      min: filters.founded_year_min,
-      max: filters.founded_year_max,
-    };
-  }
-
   if (filters.name) {
-    payload.company_name = { values: [filters.name] };
+    payload.company_name = [filters.name];
   }
 
   return payload;
@@ -61,7 +48,6 @@ export async function POST(
 
     const token = await getAuthToken();
     if (!token) {
-      console.error("[COMPANY SEARCH] No token available");
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -145,8 +131,7 @@ export async function POST(
       page_size: data.page_size || pageSize,
       total_pages: data.total_pages || Math.ceil((data.total_elements || companies.length) / pageSize),
     });
-  } catch (error) {
-    console.error("[COMPANY SEARCH] Error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Failed to search companies" },
       { status: 500 }

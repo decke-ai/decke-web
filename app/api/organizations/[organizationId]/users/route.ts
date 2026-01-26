@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthToken } from "@/lib/api";
+import { getAuthToken, createUnauthorizedResponse } from "@/lib/api";
 
 export const runtime = "nodejs";
 
@@ -11,6 +11,10 @@ export async function GET(
 ) {
   try {
     const token = await getAuthToken();
+    if (!token) {
+      return createUnauthorizedResponse();
+    }
+
     const { organizationId } = await params;
 
     const { searchParams } = new URL(request.url);
@@ -21,19 +25,19 @@ export async function GET(
     queryParams.set("page_number", pageNumber);
     queryParams.set("page_size", pageSize);
 
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
     const url = `${API_URL}/organizations/${organizationId}/users?${queryParams.toString()}`;
 
     const response = await fetch(url, {
       method: "GET",
-      headers,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
     });
+
+    if (response.status === 401) {
+      return createUnauthorizedResponse();
+    }
 
     if (!response.ok) {
       const errorText = await response.text();

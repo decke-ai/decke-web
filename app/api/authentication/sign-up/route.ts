@@ -37,6 +37,8 @@ export async function POST(request: NextRequest) {
     const email = session.user.email;
     const domain = email?.split("@")[1];
 
+    console.log("[Sign-up] Session user:", JSON.stringify(session.user, null, 2));
+
     if (!domain) {
       return NextResponse.json(
         { error: "Invalid email domain" },

@@ -72,7 +72,7 @@ export default function ProtectedLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, isLoading, isCheckingBackend, needsOnboarding, needsSubscription, organization, backendUser } = useAuth();
+  const { isAuthenticated, isLoading, isCheckingBackend, needsOnboarding, needsSubscription, organization, backendUser, subscription } = useAuth();
 
   const pageConfig = getPageConfig(pathname);
   const PageIcon = pageConfig.icon;
@@ -115,14 +115,18 @@ export default function ProtectedLayout({
     if (isLoading || isCheckingBackend) return;
     if (!isAuthenticated) return;
 
+    console.log("[Layout] Checking redirects - organization:", !!organization, "needsSubscription:", needsSubscription, "subscription:", subscription);
+
     if (!organization) {
+      console.log("[Layout] Redirecting to /organizations - no organization");
       router.replace("/organizations");
     } else if (needsSubscription) {
+      console.log("[Layout] Redirecting to Stripe - needsSubscription is true, subscription:", subscription);
       window.location.href = STRIPE_BILLING_URL;
     } else if (needsOnboarding && backendUser) {
       router.replace(`/organizations/${organization.id}/users/${backendUser.id}/onboardings`);
     }
-  }, [isLoading, isCheckingBackend, isAuthenticated, needsOnboarding, needsSubscription, organization, backendUser, router]);
+  }, [isLoading, isCheckingBackend, isAuthenticated, needsOnboarding, needsSubscription, organization, backendUser, router, subscription]);
 
   useEffect(() => {
     if (isLoading || isCheckingBackend) return;

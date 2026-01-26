@@ -363,36 +363,25 @@ export const PEOPLE_FILTER_TO_SEARCH_API_MAP: Record<string, string> = {
 export const PROSPECT_FILTER_TO_SEARCH_API_MAP = PEOPLE_FILTER_TO_SEARCH_API_MAP;
 
 // Mapping from autocomplete/BusinessFilters field to search API field
-// Some fields have the same name, others need to be mapped
+// These must match the backend CompanySearchFilters schema
 export const FILTER_TO_SEARCH_API_MAP: Record<string, string> = {
   // Location
-  country: "country_code",
-  region_country_code: "region_country_code",
-  city_region_country: "city_region_country",
+  country: "company_country_iso_alpha_2",
 
   // Industry
-  google_category: "google_category",
-  naics_category: "naics_category",
-  linkedin_category: "linkedin_industry",
+  google_category: "company_google_category",
+  naics_category: "company_naics",
+  linkedin_category: "company_linkedin_category",
 
   // Company attributes
-  company_size: "employee_range",
-  company_revenue: "revenue_range",
-  number_of_locations: "number_of_locations",
+  company_size: "company_size",
+  company_revenue: "company_revenue",
+  number_of_locations: "company_location",
   company_age: "company_age",
 
   // Technology
-  company_tech_stack_tech: "tech_stack",
-  company_tech_stack_categories: "company_tech_stack_categories",
-
-  // Jobs
-  job_title: "job_title",
-  job_department: "job_department",
-  job_level: "job_level",
-
-  // Other
-  business_intent_topics: "business_intent_topics",
-  domain: "domain",
+  company_tech_stack_tech: "company_technology_stack",
+  company_tech_stack_categories: "company_technology_stack_category",
 };
 
 export const AUTOCOMPLETE_FIELD_TO_BACKEND_MAP: Record<string, string> = {

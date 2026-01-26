@@ -10,14 +10,13 @@ const PEOPLE_FILTER_TO_BACKEND_MAP: Record<string, string> = {
   job_title: "person_job_title",
   job_level: "person_job_level",
   job_department: "person_job_department",
-  company_name: "company_name",
-  company_domain: "company_domain",
   business_id: "company_id",
   country: "person_country_iso_alpha_2",
-  region_country_code: "person_region_name",
-  city_region_country: "person_city_name",
   company_size: "company_size",
   company_revenue: "company_revenue",
+  google_category: "company_google_category",
+  naics_category: "company_naics",
+  linkedin_category: "company_linkedin_category",
 };
 
 function buildFiltersPayload(
@@ -29,14 +28,13 @@ function buildFiltersPayload(
     "job_title",
     "job_level",
     "job_department",
-    "company_name",
-    "company_domain",
     "business_id",
     "country",
-    "region_country_code",
-    "city_region_country",
     "company_size",
     "company_revenue",
+    "google_category",
+    "naics_category",
+    "linkedin_category",
   ];
 
   for (const field of arrayFilterFields) {
@@ -145,8 +143,7 @@ export async function POST(
       page_size: data.page_size || pageSize,
       total_pages: data.total_pages || Math.ceil((data.total_elements || people.length) / pageSize),
     });
-  } catch (error) {
-    console.error("People search error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Failed to search people" },
       { status: 500 }

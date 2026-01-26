@@ -74,6 +74,17 @@ export function useParagon() {
 
         await paragon.authenticate(projectId, token);
         setIsReady(true);
+
+        const authedUser = paragon.getUser();
+        if (process.env.NODE_ENV === "development") {
+          // eslint-disable-next-line no-console
+          console.log("Paragon authenticated user:", authedUser);
+          if (authedUser.authenticated) {
+            // eslint-disable-next-line no-console
+            console.log("Available integrations:", Object.keys(authedUser.integrations || {}));
+          }
+        }
+
         updateIntegrations();
 
         paragon.subscribe(SDK_EVENT.ON_INTEGRATION_INSTALL, () => {
@@ -96,23 +107,52 @@ export function useParagon() {
     initParagon();
   }, [user, organizationId, fetchParagonToken, updateIntegrations]);
 
-  const connectIntegration = useCallback(async (integrationName: string) => {
-    if (!isReady) {
-      toast.error("Paragon is not ready. Please try again.");
-      return;
-    }
+  const connectIntegration = useCallback((integrationName: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (!isReady) {
+        toast.error("Paragon is not ready. Please try again.");
+        resolve(false);
+        return;
+      }
 
-    setIsConnecting(true);
-    try {
-      await paragon.connect(integrationName, {});
-      updateIntegrations();
-      toast.success("Integration connected successfully");
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to connect integration";
-      toast.error(errorMessage);
-    } finally {
-      setIsConnecting(false);
-    }
+      setIsConnecting(true);
+
+      const onInstall = () => {
+        updateIntegrations();
+        setIsConnecting(false);
+        paragon.unsubscribe(SDK_EVENT.ON_INTEGRATION_INSTALL, onInstall);
+        resolve(true);
+      };
+
+      paragon.subscribe(SDK_EVENT.ON_INTEGRATION_INSTALL, onInstall);
+
+      try {
+        paragon.connect(integrationName, {
+          onClose: () => {
+            setIsConnecting(false);
+            paragon.unsubscribe(SDK_EVENT.ON_INTEGRATION_INSTALL, onInstall);
+            resolve(false);
+          },
+          onError: (err: Error) => {
+            const errorMessage = err.message || "Failed to connect integration";
+            toast.error(errorMessage);
+            setIsConnecting(false);
+            paragon.unsubscribe(SDK_EVENT.ON_INTEGRATION_INSTALL, onInstall);
+            resolve(false);
+          },
+        });
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to connect integration";
+        if (errorMessage.includes("not found")) {
+          toast.error(`Integration "${integrationName}" is not enabled in Paragon. Please configure it in the Paragon dashboard.`);
+        } else {
+          toast.error(errorMessage);
+        }
+        setIsConnecting(false);
+        paragon.unsubscribe(SDK_EVENT.ON_INTEGRATION_INSTALL, onInstall);
+        resolve(false);
+      }
+    });
   }, [isReady, updateIntegrations]);
 
   const disconnectIntegration = useCallback(async (integrationName: string) => {

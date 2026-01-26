@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { Columns3, Loader2, ChevronLeft, ChevronRight, Building2, Zap } from "lucide-react";
+import { Columns3, Loader2, ChevronLeft, ChevronRight, Building2, Zap, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -15,6 +15,7 @@ import {
 import { CompanyTable, TECHNOGRAPHICS_COLUMNS, CompanyColumnId } from "@/components/companies/company-table";
 import { CompanyDrawer } from "@/components/companies/company-drawer";
 import { EnrichDrawer, CompanyEnrichOptions } from "@/components/records/enrich-drawer";
+import { ExportDrawer } from "@/components/records/export-drawer";
 import { Empty } from "@/components/ui/empty";
 import { Business } from "@/lib/explorium/types";
 
@@ -138,6 +139,7 @@ export default function CompaniesPage() {
   const [selectedCompany, setSelectedCompany] = useState<Business | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEnrichDrawerOpen, setIsEnrichDrawerOpen] = useState(false);
+  const [isExportDrawerOpen, setIsExportDrawerOpen] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const fetchCompanies = useCallback(async (page: number) => {
@@ -303,14 +305,24 @@ export default function CompaniesPage() {
 
         <div className="flex items-center gap-3">
           {selectedIds.length > 0 && (
-            <Button
-              variant="outline"
-              className="h-9"
-              onClick={() => setIsEnrichDrawerOpen(true)}
-            >
-              <Zap className="h-4 w-4" />
-              Enrichment
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                className="h-9"
+                onClick={() => setIsExportDrawerOpen(true)}
+              >
+                <Upload className="h-4 w-4" />
+                Export to CRM
+              </Button>
+              <Button
+                variant="outline"
+                className="h-9"
+                onClick={() => setIsEnrichDrawerOpen(true)}
+              >
+                <Zap className="h-4 w-4" />
+                Enrichment
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -388,6 +400,17 @@ export default function CompaniesPage() {
         recordType="companies"
         selectedCount={selectedIds.length}
         onEnrich={handleEnrich}
+      />
+
+      <ExportDrawer
+        open={isExportDrawerOpen}
+        onOpenChange={setIsExportDrawerOpen}
+        organizationId={organizationId}
+        recordType="companies"
+        selectedRecords={companies
+          .filter((c) => selectedIds.includes(c.id || c.business_id || ""))
+          .map((c) => ({ ...c, id: c.id || c.business_id || "" }))}
+        onExportComplete={() => setSelectedIds([])}
       />
     </div>
   );

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { Search, Columns3, Loader2, ChevronLeft, ChevronRight, Users, Zap } from "lucide-react";
+import { Search, Columns3, Loader2, ChevronLeft, ChevronRight, Users, Zap, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
 import { PeopleTable } from "@/components/people/people-table";
 import { PersonDrawer } from "@/components/people/person-drawer";
 import { EnrichDrawer, PeopleEnrichOptions } from "@/components/records/enrich-drawer";
+import { ExportDrawer } from "@/components/records/export-drawer";
 import { Empty } from "@/components/ui/empty";
 import { Person } from "@/lib/explorium/types";
 
@@ -111,6 +112,7 @@ export default function PeoplePage() {
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEnrichDrawerOpen, setIsEnrichDrawerOpen] = useState(false);
+  const [isExportDrawerOpen, setIsExportDrawerOpen] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const fetchPeople = useCallback(async (page: number) => {
@@ -289,14 +291,24 @@ export default function PeoplePage() {
 
         <div className="flex items-center gap-3">
           {selectedIds.length > 0 && (
-            <Button
-              variant="outline"
-              className="h-9"
-              onClick={() => setIsEnrichDrawerOpen(true)}
-            >
-              <Zap className="h-4 w-4" />
-              Enrichment
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                className="h-9"
+                onClick={() => setIsExportDrawerOpen(true)}
+              >
+                <Upload className="h-4 w-4" />
+                Export to CRM
+              </Button>
+              <Button
+                variant="outline"
+                className="h-9"
+                onClick={() => setIsEnrichDrawerOpen(true)}
+              >
+                <Zap className="h-4 w-4" />
+                Enrichment
+              </Button>
+            </>
           )}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -383,6 +395,17 @@ export default function PeoplePage() {
         recordType="people"
         selectedCount={selectedIds.length}
         onEnrich={handleEnrich}
+      />
+
+      <ExportDrawer
+        open={isExportDrawerOpen}
+        onOpenChange={setIsExportDrawerOpen}
+        organizationId={organizationId}
+        recordType="people"
+        selectedRecords={people
+          .filter((p) => selectedIds.includes(p.id || p.prospect_id || ""))
+          .map((p) => ({ ...p, id: p.id || p.prospect_id || "" }))}
+        onExportComplete={() => setSelectedIds([])}
       />
     </div>
   );

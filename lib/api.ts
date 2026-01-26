@@ -1,4 +1,5 @@
 import { auth0 } from "@/lib/auth0";
+import { NextResponse } from "next/server";
 
 const API_URL = process.env.API_URL || "https://api.decke.ai";
 
@@ -16,6 +17,13 @@ export async function getAuthToken(): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+export function createUnauthorizedResponse() {
+  return NextResponse.json(
+    { error: "Session expired. Please login again.", requiresAuth: true },
+    { status: 401 }
+  );
 }
 
 export async function getOrganizationId(): Promise<string | null> {

@@ -14,9 +14,11 @@ import {
   List,
   Building,
   Users,
+  UsersRound,
   Coins,
   Plug,
   CreditCard,
+  Radio,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useAnalytics } from "@/hooks/use-analytics";
@@ -155,6 +157,12 @@ export function AppSidebar() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
+              <Link href={`/organizations/${organizationId}/channels`}>
+                <Radio className="mr-2 h-4 w-4" />
+                Channels
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
               <Link href="/credits">
                 <Coins className="mr-2 h-4 w-4" />
                 Credits
@@ -170,6 +178,12 @@ export function AppSidebar() {
               <Link href={`/organizations/${organizationId}`}>
                 <Building2 className="mr-2 h-4 w-4" />
                 Organization
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/organizations/${organizationId}/users`}>
+                <UsersRound className="mr-2 h-4 w-4" />
+                Users
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

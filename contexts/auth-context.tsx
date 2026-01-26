@@ -18,12 +18,15 @@ export interface User {
   picture?: string;
 }
 
+export type UserProfile = "Owner" | "Administrator" | "Member";
+
 export interface BackendUser {
   id: string;
   name: string;
   email: string;
   avatar?: string;
   onboarding: boolean;
+  profile: UserProfile;
 }
 
 export type SubscriptionStatus = "active" | "canceled" | "grace_period" | "past_due" | "trialing";
@@ -84,13 +87,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await response.json();
+      console.log("[AuthContext] /api/authentication/me response:", JSON.stringify(data));
 
       if (data.exists && data.organization) {
         setOrganization(data.organization);
 
         if (data.subscription) {
           setSubscription(data.subscription);
+          console.log("[AuthContext] Subscription status:", data.subscription.status);
           const hasValidSubscription = data.subscription.status === "active" || data.subscription.status === "trialing";
+          console.log("[AuthContext] hasValidSubscription:", hasValidSubscription);
           setNeedsSubscription(!hasValidSubscription);
         } else {
           setSubscription(null);

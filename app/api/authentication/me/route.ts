@@ -11,6 +11,7 @@ export async function GET() {
     const session = await auth0.getSession();
 
     if (!session) {
+      console.log("[Auth me] No session found");
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -22,11 +23,15 @@ export async function GET() {
     const email = session.user.email;
     const domain = email?.split("@")[1];
 
+    console.log("[Auth me] Email:", email, "Domain:", domain, "Has token:", !!token);
+
     if (!token) {
+      console.log("[Auth me] No token found");
       return NextResponse.json({ exists: false, user: null, organization: null, subscription: null });
     }
 
     if (!domain) {
+      console.log("[Auth me] No domain found");
       return NextResponse.json({ exists: false, user: null, organization: null, subscription: null });
     }
 
@@ -51,6 +56,7 @@ export async function GET() {
 
     if (organizations.length > 0) {
       const org = organizations[0];
+      console.log("[Auth me] Organization data:", JSON.stringify(org));
 
       const usersUrl = `${API_URL}/organizations/${org.id}/users?email=${encodeURIComponent(email)}`;
 
@@ -71,32 +77,54 @@ export async function GET() {
             email: user.email,
             avatar: user.avatar,
             onboarding: user.onboarding,
+            profile: user.profile || "Member",
           };
+        } else {
+          console.log(`No user found in backend for email: ${email}`);
         }
+      } else {
+        console.error(`User fetch failed for email ${email}:`, usersResponse.status);
       }
-
-      const subscriptionUrl = `${API_URL}/organizations/${org.id}/subscriptions`;
-      const subscriptionResponse = await fetch(subscriptionUrl, {
-        method: "GET",
-        headers,
-      });
 
       let subscriptionData = null;
-      if (subscriptionResponse.ok) {
-        const subscription = await subscriptionResponse.json();
-        if (subscription) {
-          subscriptionData = {
-            id: subscription.id,
-            status: subscription.status,
-            trial_start: subscription.trial_start,
-            trial_end: subscription.trial_end,
-            current_period_start: subscription.current_period_start,
-            current_period_end: subscription.current_period_end,
-          };
+
+      if (org.subscription) {
+        console.log("[Auth me] Using subscription from organization:", JSON.stringify(org.subscription));
+        subscriptionData = {
+          id: org.subscription.id,
+          status: org.subscription.status,
+          trial_start: org.subscription.trial_start,
+          trial_end: org.subscription.trial_end,
+          current_period_start: org.subscription.current_period_start,
+          current_period_end: org.subscription.current_period_end,
+        };
+      } else {
+        const subscriptionUrl = `${API_URL}/organizations/${org.id}/subscriptions`;
+        const subscriptionResponse = await fetch(subscriptionUrl, {
+          method: "GET",
+          headers,
+        });
+
+        if (subscriptionResponse.ok) {
+          const subscription = await subscriptionResponse.json();
+          console.log("[Auth me] Subscription response from endpoint:", JSON.stringify(subscription));
+          if (subscription) {
+            subscriptionData = {
+              id: subscription.id,
+              status: subscription.status,
+              trial_start: subscription.trial_start,
+              trial_end: subscription.trial_end,
+              current_period_start: subscription.current_period_start,
+              current_period_end: subscription.current_period_end,
+            };
+          }
+        } else {
+          const errorText = await subscriptionResponse.text();
+          console.error(`[Auth me] Subscription fetch failed for org ${org.id}:`, subscriptionResponse.status, errorText);
         }
       }
 
-      return NextResponse.json({
+      const result = {
         exists: true,
         user: userData,
         organization: {
@@ -106,7 +134,9 @@ export async function GET() {
           logo: org.avatar,
         },
         subscription: subscriptionData,
-      });
+      };
+      console.log("[Auth me] Final result:", JSON.stringify(result));
+      return NextResponse.json(result);
     }
 
     return NextResponse.json({ exists: false, user: null, organization: null, subscription: null });
