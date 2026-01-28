@@ -12,37 +12,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CompanyTable, TECHNOGRAPHICS_COLUMNS, CompanyColumnId } from "@/components/companies/company-table";
+import { CompanyTable, TECHNOGRAPHICS_COLUMNS, BRAZIL_COLUMNS, CompanyColumnId } from "@/components/companies/company-table";
 import { CompanyDrawer } from "@/components/companies/company-drawer";
 import { EnrichDrawer, CompanyEnrichOptions } from "@/components/records/enrich-drawer";
 import { ExportDrawer } from "@/components/records/export-drawer";
 import { Empty } from "@/components/ui/empty";
 import { Business } from "@/lib/explorium/types";
-
-interface CompanyTechnographics {
-  company_id: string;
-  company_technology_analytic?: string[] | null;
-  company_technology_collaboration?: string[] | null;
-  company_technology_communication?: string[] | null;
-  company_technology_computer_network?: string[] | null;
-  company_technology_customer_management?: string[] | null;
-  company_technology_devops_and_development?: string[] | null;
-  company_technology_ecommerce?: string[] | null;
-  company_technology_finance_and_accounting?: string[] | null;
-  company_technology_health?: string[] | null;
-  company_technology_management?: string[] | null;
-  company_technology_marketing?: string[] | null;
-  company_technology_operation_management?: string[] | null;
-  company_technology_operation_software?: string[] | null;
-  company_technology_people?: string[] | null;
-  company_technology_platform_and_storage?: string[] | null;
-  company_technology_product_and_design?: string[] | null;
-  company_technology_productivity_and_operation?: string[] | null;
-  company_technology_programming_language_and_framework?: string[] | null;
-  company_technology_sale?: string[] | null;
-  company_technology_security?: string[] | null;
-  company_technology_test?: string[] | null;
-}
 
 interface RecordResponse {
   content?: Array<{
@@ -77,6 +52,7 @@ const COMPANY_COLUMNS: { id: CompanyColumnId; label: string }[] = [
   { id: "location", label: "Company Location" },
   { id: "revenue", label: "Company Revenue" },
   ...TECHNOGRAPHICS_COLUMNS.map((col) => ({ id: col.id, label: col.label })),
+  ...BRAZIL_COLUMNS.map((col) => ({ id: col.id, label: col.label })),
 ];
 
 function mapRecordToCompany(record: {
@@ -122,6 +98,80 @@ function mapRecordToCompany(record: {
       country: (values.country as string) || (values.country_name as string) || (values.company_country as string) || (values.company_country_name as string),
       country_code: (values.country_code as string) || (values.company_country_code as string),
       postal_code: (values.postal_code as string) || (values.company_postal_code as string),
+    },
+    company_technology_analytic: (values.company_technology_analytic as string[]) || undefined,
+    company_technology_collaboration: (values.company_technology_collaboration as string[]) || undefined,
+    company_technology_communication: (values.company_technology_communication as string[]) || undefined,
+    company_technology_computer_network: (values.company_technology_computer_network as string[]) || undefined,
+    company_technology_customer_management: (values.company_technology_customer_management as string[]) || undefined,
+    company_technology_devops_and_development: (values.company_technology_devops_and_development as string[]) || undefined,
+    company_technology_ecommerce: (values.company_technology_ecommerce as string[]) || undefined,
+    company_technology_finance_and_accounting: (values.company_technology_finance_and_accounting as string[]) || undefined,
+    company_technology_health: (values.company_technology_health as string[]) || undefined,
+    company_technology_management: (values.company_technology_management as string[]) || undefined,
+    company_technology_marketing: (values.company_technology_marketing as string[]) || undefined,
+    company_technology_operation_management: (values.company_technology_operation_management as string[]) || undefined,
+    company_technology_operation_software: (values.company_technology_operation_software as string[]) || undefined,
+    company_technology_people: (values.company_technology_people as string[]) || undefined,
+    company_technology_platform_and_storage: (values.company_technology_platform_and_storage as string[]) || undefined,
+    company_technology_product_and_design: (values.company_technology_product_and_design as string[]) || undefined,
+    company_technology_productivity_and_operation: (values.company_technology_productivity_and_operation as string[]) || undefined,
+    company_technology_programming_language_and_framework: (values.company_technology_programming_language_and_framework as string[]) || undefined,
+    company_technology_sale: (values.company_technology_sale as string[]) || undefined,
+    company_technology_security: (values.company_technology_security as string[]) || undefined,
+    company_technology_test: (values.company_technology_test as string[]) || undefined,
+    brazil_enrichment: buildBrazilEnrichment(values),
+  };
+}
+
+function buildBrazilEnrichment(values: Record<string, unknown>): Business["brazil_enrichment"] | undefined {
+  const existingEnrichment = values.brazil_enrichment as Business["brazil_enrichment"];
+  if (existingEnrichment) {
+    return existingEnrichment;
+  }
+
+  const cnpj = values.company_cnpj as string | undefined;
+  const capitalSocial = values.company_share_capital as number | undefined;
+  const primaryCnae = values.company_cnae_primary || values.company_primary_cnae;
+  const secondaryCnaes = values.company_cnae_secondary || values.company_secondary_cnae || values.company_secondary_cnaes;
+  const establishmentIdentifier = values.company_establishment_identifier;
+  const activityStartDate = values.company_activity_start_date as string | undefined;
+  const legalNature = values.company_legal_nature;
+  const economicSector = values.company_economic_sector as string | undefined;
+  const mei = values.company_mei as boolean | undefined;
+  const simples = values.company_simples as boolean | undefined;
+  const registrationStatus = values.company_registration_status;
+  const registrationStatusDate = values.company_registration_status_date as string | undefined;
+  const partners = values.company_partner || values.company_partners;
+
+  const hasAnyBrazilData = cnpj || capitalSocial !== undefined || primaryCnae || secondaryCnaes ||
+    establishmentIdentifier || activityStartDate || legalNature || economicSector !== undefined ||
+    mei !== undefined || simples !== undefined || registrationStatus || registrationStatusDate || partners;
+
+  if (!hasAnyBrazilData) {
+    return undefined;
+  }
+
+  return {
+    document: cnpj || null,
+    domain: (values.domain as string) || "",
+    score: 1,
+    enrichment: {
+      cnpj,
+      capital_social: capitalSocial,
+      cnae_principal: primaryCnae,
+      cnae_secundarios: secondaryCnaes,
+      establishment_identifier: establishmentIdentifier,
+      activity_start_date: activityStartDate,
+      legal_nature: legalNature,
+      economic_sector: economicSector,
+      simples: {
+        mei_option: mei,
+        simples_option: simples,
+      },
+      registration_status: registrationStatus,
+      registration_status_date: registrationStatusDate,
+      partners,
     },
   };
 }
@@ -180,7 +230,7 @@ export default function CompaniesPage() {
   const [isEnriching, setIsEnriching] = useState(false);
 
   const handleEnrich = async (options: CompanyEnrichOptions) => {
-    if (!options.technographics && !options.fundingAcquisition) {
+    if (!options.technographics && !options.fundingAcquisition && !options.brazilReceitaFederal) {
       toast.error("Please select at least one enrichment option");
       return;
     }
@@ -204,42 +254,6 @@ export default function CompaniesPage() {
         }
 
         const data = await response.json();
-
-        setCompanies((prev) =>
-          prev.map((company) => {
-            const enrichedData = data.companies?.find(
-              (c: CompanyTechnographics) => c.company_id === company.id
-            );
-            if (enrichedData) {
-              return {
-                ...company,
-                company_technology_analytic: enrichedData.company_technology_analytic || [],
-                company_technology_collaboration: enrichedData.company_technology_collaboration || [],
-                company_technology_communication: enrichedData.company_technology_communication || [],
-                company_technology_computer_network: enrichedData.company_technology_computer_network || [],
-                company_technology_customer_management: enrichedData.company_technology_customer_management || [],
-                company_technology_devops_and_development: enrichedData.company_technology_devops_and_development || [],
-                company_technology_ecommerce: enrichedData.company_technology_ecommerce || [],
-                company_technology_finance_and_accounting: enrichedData.company_technology_finance_and_accounting || [],
-                company_technology_health: enrichedData.company_technology_health || [],
-                company_technology_management: enrichedData.company_technology_management || [],
-                company_technology_marketing: enrichedData.company_technology_marketing || [],
-                company_technology_operation_management: enrichedData.company_technology_operation_management || [],
-                company_technology_operation_software: enrichedData.company_technology_operation_software || [],
-                company_technology_people: enrichedData.company_technology_people || [],
-                company_technology_platform_and_storage: enrichedData.company_technology_platform_and_storage || [],
-                company_technology_product_and_design: enrichedData.company_technology_product_and_design || [],
-                company_technology_productivity_and_operation: enrichedData.company_technology_productivity_and_operation || [],
-                company_technology_programming_language_and_framework: enrichedData.company_technology_programming_language_and_framework || [],
-                company_technology_sale: enrichedData.company_technology_sale || [],
-                company_technology_security: enrichedData.company_technology_security || [],
-                company_technology_test: enrichedData.company_technology_test || [],
-              };
-            }
-            return company;
-          })
-        );
-
         toast.success(
           `Enrichment completed: ${data.total_with_data} of ${data.total_requested} companies enriched (${data.credits_consumed} credits used)`
         );
@@ -249,7 +263,52 @@ export default function CompaniesPage() {
         toast.info("Funding and acquisition enrichment coming soon");
       }
 
+      if (options.brazilReceitaFederal) {
+        const selectedCompanies = companies.filter((c) =>
+          selectedIds.includes(c.id || c.business_id || "")
+        );
+
+        let enrichedCount = 0;
+        let errorCount = 0;
+
+        for (const company of selectedCompanies) {
+          if (!company.domain) {
+            errorCount++;
+            continue;
+          }
+
+          try {
+            const response = await fetch(
+              `/api/organizations/${organizationId}/companies/enrichments/brazil?domain=${encodeURIComponent(company.domain)}`
+            );
+
+            if (response.ok) {
+              const data = await response.json();
+              if (data.enrichment) {
+                enrichedCount++;
+              }
+            } else {
+              errorCount++;
+            }
+          } catch {
+            errorCount++;
+          }
+        }
+
+        if (enrichedCount > 0) {
+          toast.success(
+            `Brazil enrichment completed: ${enrichedCount} of ${selectedCompanies.length} companies enriched`
+          );
+        }
+        if (errorCount > 0) {
+          toast.warning(
+            `${errorCount} companies could not be enriched (missing domain or API error)`
+          );
+        }
+      }
+
       setSelectedIds([]);
+      await fetchCompanies(currentPage);
     } catch {
       toast.error("Failed to enrich companies");
     } finally {

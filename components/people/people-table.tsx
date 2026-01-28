@@ -565,8 +565,14 @@ export function PeopleTable({
             <span className="font-medium text-sm truncate">{getPersonFullName(person)}</span>
           </div>
         );
-      case "job_title":
-        return <span className="text-sm truncate">{smartCapitalize(person.job_title)}</span>;
+      case "job_title": {
+        const jobTitle = smartCapitalize(person.job_title);
+        return jobTitle && jobTitle !== "-" ? (
+          <span className="text-sm truncate">{jobTitle}</span>
+        ) : (
+          <span className="text-sm text-muted-foreground">-</span>
+        );
+      }
       case "company": {
         const companyName = person.company_name || "-";
         return (
@@ -621,15 +627,17 @@ export function PeopleTable({
             <span className="truncate">{displayCompanyUrl}</span>
           </a>
         ) : (
-          <span className="text-sm">-</span>
+          <span className="text-sm text-muted-foreground">-</span>
         );
       }
       case "location": {
         const location = formatLocation(person);
-        return (
+        return location && location !== "-" ? (
           <span className="text-sm truncate" title={location}>
             {location}
           </span>
+        ) : (
+          <span className="text-sm text-muted-foreground">-</span>
         );
       }
       case "linkedin": {
@@ -649,7 +657,7 @@ export function PeopleTable({
             <span className="truncate">{displayUrl}</span>
           </a>
         ) : (
-          <span className="text-sm">-</span>
+          <span className="text-sm text-muted-foreground">-</span>
         );
       }
       case "experiences": {

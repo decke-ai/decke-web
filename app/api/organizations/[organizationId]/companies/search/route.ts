@@ -13,6 +13,8 @@ function buildFiltersPayload(
 
   const arrayFilterFields: (keyof BusinessFilters)[] = [
     "country",
+    "region_country_code",
+    "city_region_country",
     "google_category",
     "naics_category",
     "linkedin_category",
@@ -22,6 +24,10 @@ function buildFiltersPayload(
     "company_age",
     "company_tech_stack_tech",
     "company_tech_stack_categories",
+    "job_title",
+    "job_department",
+    "job_level",
+    "business_intent_topics",
   ];
 
   for (const field of arrayFilterFields) {

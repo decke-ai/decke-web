@@ -63,6 +63,13 @@ export interface Business {
   company_technology_sale?: string[];
   company_technology_security?: string[];
   company_technology_test?: string[];
+  // Brazil Receita Federal enrichment
+  brazil_enrichment?: {
+    document: string | null;
+    domain: string;
+    enrichment: Record<string, unknown> | null;
+    score: number;
+  };
 }
 
 // BusinessFilters uses the same field names as the autocomplete API
@@ -367,6 +374,8 @@ export const PROSPECT_FILTER_TO_SEARCH_API_MAP = PEOPLE_FILTER_TO_SEARCH_API_MAP
 export const FILTER_TO_SEARCH_API_MAP: Record<string, string> = {
   // Location
   country: "company_country_iso_alpha_2",
+  region_country_code: "company_region_code",
+  city_region_country: "company_city_name",
 
   // Industry
   google_category: "company_google_category",
@@ -382,6 +391,14 @@ export const FILTER_TO_SEARCH_API_MAP: Record<string, string> = {
   // Technology
   company_tech_stack_tech: "company_technology_stack",
   company_tech_stack_categories: "company_technology_stack_category",
+
+  // People
+  job_title: "person_job_title",
+  job_department: "person_job_department",
+  job_level: "person_job_level",
+
+  // Intent
+  business_intent_topics: "company_intent_topic",
 };
 
 export const AUTOCOMPLETE_FIELD_TO_BACKEND_MAP: Record<string, string> = {

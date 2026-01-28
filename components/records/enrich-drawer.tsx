@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Mail, Phone, Zap, Search, Cpu, TrendingUp } from "lucide-react";
+import { Mail, Phone, Zap, Search, Cpu, TrendingUp, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -34,6 +34,7 @@ export interface PeopleEnrichOptions {
 export interface CompanyEnrichOptions {
   technographics: boolean;
   fundingAcquisition: boolean;
+  brazilReceitaFederal: boolean;
 }
 
 export type EnrichOptions = PeopleEnrichOptions | CompanyEnrichOptions;
@@ -77,11 +78,13 @@ export function EnrichDrawer({
 
   const [technographicsEnabled, setTechnographicsEnabled] = useState(false);
   const [fundingAcquisitionEnabled, setFundingAcquisitionEnabled] = useState(false);
+  const [brazilReceitaFederalEnabled, setBrazilReceitaFederalEnabled] = useState(false);
 
   const emailCredits = 1;
   const phoneCredits = phoneMode === "quick" ? 5 : 10;
   const technographicsCredits = 1;
   const fundingAcquisitionCredits = 1;
+  const brazilReceitaFederalCredits = 1;
 
   const totalCredits = useMemo(() => {
     if (recordType === "people") {
@@ -93,17 +96,18 @@ export function EnrichDrawer({
       let credits = 0;
       if (technographicsEnabled) credits += technographicsCredits * selectedCount;
       if (fundingAcquisitionEnabled) credits += fundingAcquisitionCredits * selectedCount;
+      if (brazilReceitaFederalEnabled) credits += brazilReceitaFederalCredits * selectedCount;
       return credits;
     }
-  }, [recordType, emailEnabled, phoneEnabled, phoneCredits, technographicsEnabled, fundingAcquisitionEnabled, selectedCount]);
+  }, [recordType, emailEnabled, phoneEnabled, phoneCredits, technographicsEnabled, fundingAcquisitionEnabled, brazilReceitaFederalEnabled, selectedCount]);
 
   const selectedOptionsCount = useMemo(() => {
     if (recordType === "people") {
       return (emailEnabled ? 1 : 0) + (phoneEnabled ? 1 : 0);
     } else {
-      return (technographicsEnabled ? 1 : 0) + (fundingAcquisitionEnabled ? 1 : 0);
+      return (technographicsEnabled ? 1 : 0) + (fundingAcquisitionEnabled ? 1 : 0) + (brazilReceitaFederalEnabled ? 1 : 0);
     }
-  }, [recordType, emailEnabled, phoneEnabled, technographicsEnabled, fundingAcquisitionEnabled]);
+  }, [recordType, emailEnabled, phoneEnabled, technographicsEnabled, fundingAcquisitionEnabled, brazilReceitaFederalEnabled]);
 
   const handleEnrich = () => {
     if (recordType === "people") {
@@ -116,6 +120,7 @@ export function EnrichDrawer({
       (onEnrich as (options: CompanyEnrichOptions) => void)({
         technographics: technographicsEnabled,
         fundingAcquisition: fundingAcquisitionEnabled,
+        brazilReceitaFederal: brazilReceitaFederalEnabled,
       });
     }
   };
@@ -160,7 +165,7 @@ export function EnrichDrawer({
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-2">
               <div className="flex items-center justify-between mb-4 text-sm text-muted-foreground">
-                <span>2 items · <span className="font-medium text-foreground">{selectedOptionsCount} selected</span></span>
+                <span>{recordType === "people" ? "2" : "3"} items · <span className="font-medium text-foreground">{selectedOptionsCount} selected</span></span>
               </div>
 
               {recordType === "people" ? (
@@ -313,6 +318,37 @@ export function EnrichDrawer({
                       <Switch
                         checked={fundingAcquisitionEnabled}
                         onCheckedChange={setFundingAcquisitionEnabled}
+                      />
+                    </div>
+                  </div>
+
+                  <div
+                    className={cn(
+                      "rounded-lg border p-4 transition-colors",
+                      brazilReceitaFederalEnabled && "border-primary bg-primary/5"
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "p-2 rounded-lg",
+                          brazilReceitaFederalEnabled ? "bg-primary/10" : "bg-muted"
+                        )}>
+                          <FileText className={cn(
+                            "h-5 w-5",
+                            brazilReceitaFederalEnabled ? "text-primary" : "text-muted-foreground"
+                          )} />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">Brazil Receita Federal</span>
+                          <Badge variant="secondary" className="text-xs">
+                            {brazilReceitaFederalCredits} / row
+                          </Badge>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={brazilReceitaFederalEnabled}
+                        onCheckedChange={setBrazilReceitaFederalEnabled}
                       />
                     </div>
                   </div>

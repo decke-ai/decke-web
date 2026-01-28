@@ -13,6 +13,13 @@ import {
   Users,
   DollarSign,
   MapPin,
+  Cpu,
+  Hash,
+  Calendar,
+  Factory,
+  Check,
+  X,
+  CircleDot,
 } from "lucide-react";
 import {
   DndContext,
@@ -42,6 +49,11 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Business } from "@/lib/explorium/types";
 import { cn } from "@/lib/utils";
 
@@ -116,32 +128,61 @@ type ColumnId =
   | "tech_programming"
   | "tech_sale"
   | "tech_security"
-  | "tech_test";
+  | "tech_test"
+  | "brazil_cnpj"
+  | "brazil_share_capital"
+  | "brazil_primary_cnae"
+  | "brazil_secondary_cnae"
+  | "brazil_establishment_identifier"
+  | "brazil_activity_start_date"
+  | "brazil_legal_nature"
+  | "brazil_economic_sector"
+  | "brazil_mei"
+  | "brazil_simples"
+  | "brazil_registration_status"
+  | "brazil_registration_status_date"
+  | "brazil_partners";
 
 export type CompanyColumnId = ColumnId;
 
 export const TECHNOGRAPHICS_COLUMNS: { id: ColumnId; label: string; field: keyof Business }[] = [
-  { id: "tech_analytic", label: "Tech Analytic", field: "company_technology_analytic" },
-  { id: "tech_collaboration", label: "Tech Collaboration", field: "company_technology_collaboration" },
-  { id: "tech_communication", label: "Tech Communication", field: "company_technology_communication" },
-  { id: "tech_computer_network", label: "Tech Computer Network", field: "company_technology_computer_network" },
-  { id: "tech_customer_management", label: "Tech Customer Management", field: "company_technology_customer_management" },
-  { id: "tech_devops", label: "Tech DevOps", field: "company_technology_devops_and_development" },
-  { id: "tech_ecommerce", label: "Tech E-commerce", field: "company_technology_ecommerce" },
-  { id: "tech_finance", label: "Tech Finance", field: "company_technology_finance_and_accounting" },
-  { id: "tech_health", label: "Tech Health", field: "company_technology_health" },
-  { id: "tech_management", label: "Tech Management", field: "company_technology_management" },
-  { id: "tech_marketing", label: "Tech Marketing", field: "company_technology_marketing" },
-  { id: "tech_operation_management", label: "Tech Operation Management", field: "company_technology_operation_management" },
-  { id: "tech_operation_software", label: "Tech Operation Software", field: "company_technology_operation_software" },
-  { id: "tech_people", label: "Tech People", field: "company_technology_people" },
-  { id: "tech_platform_storage", label: "Tech Platform & Storage", field: "company_technology_platform_and_storage" },
-  { id: "tech_product_design", label: "Tech Product & Design", field: "company_technology_product_and_design" },
-  { id: "tech_productivity", label: "Tech Productivity", field: "company_technology_productivity_and_operation" },
-  { id: "tech_programming", label: "Tech Programming", field: "company_technology_programming_language_and_framework" },
-  { id: "tech_sale", label: "Tech Sale", field: "company_technology_sale" },
-  { id: "tech_security", label: "Tech Security", field: "company_technology_security" },
-  { id: "tech_test", label: "Tech Test", field: "company_technology_test" },
+  { id: "tech_analytic", label: "Company Technology Analytic", field: "company_technology_analytic" },
+  { id: "tech_collaboration", label: "Company Technology Collaboration", field: "company_technology_collaboration" },
+  { id: "tech_communication", label: "Company Technology Communication", field: "company_technology_communication" },
+  { id: "tech_computer_network", label: "Company Technology Computer Network", field: "company_technology_computer_network" },
+  { id: "tech_customer_management", label: "Company Technology Customer Management", field: "company_technology_customer_management" },
+  { id: "tech_devops", label: "Company Technology DevOps", field: "company_technology_devops_and_development" },
+  { id: "tech_ecommerce", label: "Company Technology E-commerce", field: "company_technology_ecommerce" },
+  { id: "tech_finance", label: "Company Technology Finance", field: "company_technology_finance_and_accounting" },
+  { id: "tech_health", label: "Company Technology Health", field: "company_technology_health" },
+  { id: "tech_management", label: "Company Technology Management", field: "company_technology_management" },
+  { id: "tech_marketing", label: "Company Technology Marketing", field: "company_technology_marketing" },
+  { id: "tech_operation_management", label: "Company Technology Operation Management", field: "company_technology_operation_management" },
+  { id: "tech_operation_software", label: "Company Technology Operation Software", field: "company_technology_operation_software" },
+  { id: "tech_people", label: "Company Technology People", field: "company_technology_people" },
+  { id: "tech_platform_storage", label: "Company Technology Platform and Storage", field: "company_technology_platform_and_storage" },
+  { id: "tech_product_design", label: "Company Technology Product and Design", field: "company_technology_product_and_design" },
+  { id: "tech_productivity", label: "Company Technology Productivity", field: "company_technology_productivity_and_operation" },
+  { id: "tech_programming", label: "Company Technology Programming", field: "company_technology_programming_language_and_framework" },
+  { id: "tech_sale", label: "Company Technology Sale", field: "company_technology_sale" },
+  { id: "tech_security", label: "Company Technology Security", field: "company_technology_security" },
+  { id: "tech_test", label: "Company Technology Test", field: "company_technology_test" },
+];
+
+export const BRAZIL_COLUMNS: { id: ColumnId; label: string; field: string; width: number; minWidth: number }[] = [
+  { id: "brazil_cnpj", label: "Company Brazil CNPJ", field: "cnpj", width: 180, minWidth: 180 },
+  { id: "brazil_share_capital", label: "Company Brazil Share Capital", field: "capital_social", width: 200, minWidth: 200 },
+  { id: "brazil_primary_cnae", label: "Company Brazil CNAE Primary", field: "cnae_principal", width: 200, minWidth: 200 },
+  { id: "brazil_secondary_cnae", label: "Company Brazil CNAE Secondary", field: "cnae_secundarios", width: 220, minWidth: 220 },
+  { id: "brazil_establishment_identifier", label: "Company Brazil Establishment Identifier", field: "establishment_identifier", width: 280, minWidth: 280 },
+  { id: "brazil_activity_start_date", label: "Company Brazil Activity Start Date", field: "activity_start_date", width: 240, minWidth: 240 },
+  { id: "brazil_legal_nature", label: "Company Brazil Legal Nature", field: "legal_nature", width: 200, minWidth: 200 },
+  { id: "brazil_economic_sector", label: "Company Brazil Economic Sector", field: "economic_sector", width: 220, minWidth: 220 },
+  { id: "brazil_mei", label: "Company Brazil MEI", field: "simples.mei_option", width: 160, minWidth: 160 },
+  { id: "brazil_simples", label: "Company Brazil Simples", field: "simples.simples_option", width: 180, minWidth: 180 },
+  { id: "brazil_registration_status", label: "Company Brazil Registration Status", field: "registration_status", width: 240, minWidth: 240 },
+  { id: "brazil_registration_status_date", label: "Company Brazil Registration Status Date", field: "registration_status_date", width: 280, minWidth: 280 },
+  { id: "brazil_partners", label: "Company Brazil Partners", field: "partners", width: 200, minWidth: 200 },
 ];
 
 // Format location based on available data
@@ -316,20 +357,27 @@ export function CompanyTable({
   const defaultColumns: Column[] = useMemo(
     () => [
       { id: "select", label: "", width: 40, minWidth: 40, maxWidth: 40, sticky: true, stickyOffset: 0 },
-      { id: "name", label: "Company Name", width: 200, minWidth: 150, maxWidth: 400, sticky: true, stickyOffset: 40 },
-      { id: "description", label: "Company Description", width: 200, minWidth: 100, maxWidth: 400 },
-      { id: "industry", label: "Company Industry", width: 150, minWidth: 100, maxWidth: 250 },
-      { id: "employees", label: "Company Employees", width: 110, minWidth: 80, maxWidth: 150 },
-      { id: "revenue", label: "Company Revenue", width: 130, minWidth: 80, maxWidth: 200 },
-      { id: "location", label: "Company Location", width: 200, minWidth: 120, maxWidth: 350 },
-      { id: "domain", label: "Company Domain", width: 150, minWidth: 100, maxWidth: 250 },
-      { id: "linkedin", label: "Company LinkedIn", width: 150, minWidth: 100, maxWidth: 250 },
+      { id: "name", label: "Company Name", width: 200, minWidth: 140, maxWidth: 400, sticky: true, stickyOffset: 40 },
+      { id: "description", label: "Company Description", width: 200, minWidth: 180, maxWidth: 400 },
+      { id: "industry", label: "Company Industry", width: 160, minWidth: 160, maxWidth: 250 },
+      { id: "employees", label: "Company Employees", width: 170, minWidth: 170, maxWidth: 200 },
+      { id: "revenue", label: "Company Revenue", width: 160, minWidth: 160, maxWidth: 200 },
+      { id: "location", label: "Company Location", width: 200, minWidth: 160, maxWidth: 350 },
+      { id: "domain", label: "Company Domain", width: 160, minWidth: 160, maxWidth: 250 },
+      { id: "linkedin", label: "Company LinkedIn", width: 160, minWidth: 160, maxWidth: 250 },
       ...TECHNOGRAPHICS_COLUMNS.map((col) => ({
         id: col.id,
         label: col.label,
-        width: 200,
-        minWidth: 120,
+        width: Math.max(200, col.label.length * 7),
+        minWidth: col.label.length * 7,
         maxWidth: 400,
+      })),
+      ...BRAZIL_COLUMNS.map((col) => ({
+        id: col.id,
+        label: col.label,
+        width: col.width,
+        minWidth: col.minWidth,
+        maxWidth: col.width * 2,
       })),
     ],
     []
@@ -595,8 +643,14 @@ export function CompanyTable({
           </span>
         );
       }
-      case "industry":
-        return <span className="text-sm truncate">{smartCapitalize(company.industry)}</span>;
+      case "industry": {
+        const industry = smartCapitalize(company.industry);
+        return industry && industry !== "-" ? (
+          <span className="text-sm truncate">{industry}</span>
+        ) : (
+          <span className="text-sm text-muted-foreground">-</span>
+        );
+      }
       case "employees": {
         const employeeValue = company.number_of_employees_range ||
           company.employee_count?.toLocaleString("pt-BR") ||
@@ -623,10 +677,12 @@ export function CompanyTable({
       }
       case "location": {
         const location = formatLocation(company);
-        return (
+        return location && location !== "-" ? (
           <span className="text-sm truncate" title={location}>
             {location}
           </span>
+        ) : (
+          <span className="text-sm text-muted-foreground">-</span>
         );
       }
       case "domain":
@@ -661,7 +717,7 @@ export function CompanyTable({
             <span className="truncate">{displayUrl}</span>
           </a>
         ) : (
-          <span className="text-sm">-</span>
+          <span className="text-sm text-muted-foreground">-</span>
         );
       }
       default: {
@@ -670,15 +726,15 @@ export function CompanyTable({
           const techValues = company[techColumn.field] as string[] | undefined;
           if (techValues && techValues.length > 0) {
             return (
-              <div className="flex flex-wrap gap-1 max-w-full overflow-hidden">
-                {techValues.slice(0, 3).map((tech, index) => (
-                  <Badge key={index} variant="secondary" className="text-[10px] whitespace-nowrap rounded-sm">
+              <div className="flex gap-1 overflow-hidden">
+                {techValues.slice(0, 2).map((tech, index) => (
+                  <Badge key={index} variant="secondary" className="text-[10px] whitespace-nowrap rounded-sm shrink-0">
                     {tech}
                   </Badge>
                 ))}
-                {techValues.length > 3 && (
-                  <Badge variant="outline" className="text-[10px] whitespace-nowrap rounded-sm">
-                    +{techValues.length - 3}
+                {techValues.length > 2 && (
+                  <Badge variant="outline" className="text-[10px] whitespace-nowrap rounded-sm shrink-0">
+                    +{techValues.length - 2}
                   </Badge>
                 )}
               </div>
@@ -686,6 +742,286 @@ export function CompanyTable({
           }
           return <span className="text-sm text-muted-foreground">-</span>;
         }
+
+        const brazilColumn = BRAZIL_COLUMNS.find((col) => col.id === columnId);
+        if (brazilColumn && company.brazil_enrichment) {
+          const enrichment = company.brazil_enrichment.enrichment as Record<string, unknown> || {};
+
+          switch (brazilColumn.field) {
+            case "cnpj": {
+              let value = enrichment.cnpj as string | null;
+              if (value) {
+                const digits = String(value).replace(/\D/g, "");
+                if (digits.length === 14) {
+                  value = digits.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+                }
+                return <span className="text-sm truncate" title={value}>{value}</span>;
+              }
+              return <span className="text-sm text-muted-foreground">-</span>;
+            }
+            case "capital_social": {
+              const capitalSocial = enrichment.capital_social ?? enrichment.share_capital;
+              if (capitalSocial !== null && capitalSocial !== undefined) {
+                const formatted = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(capitalSocial));
+                return <span className="text-sm truncate" title={formatted}>{formatted}</span>;
+              }
+              return <span className="text-sm text-muted-foreground">-</span>;
+            }
+            case "cnae_principal": {
+              const cnaeRaw = enrichment.cnae_principal ?? enrichment.cnae_primary ?? enrichment.primary_cnae;
+              if (!cnaeRaw) {
+                return <span className="text-sm text-muted-foreground">-</span>;
+              }
+              if (typeof cnaeRaw === "string") {
+                const parts = cnaeRaw.split(" - ");
+                const code = parts[0]?.trim();
+                const description = parts.length > 1 ? parts.slice(1).join(" - ").trim() : undefined;
+                if (code) {
+                  return (
+                    <Popover>
+                      <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Badge variant="secondary" className="text-[10px] whitespace-nowrap rounded-sm cursor-pointer hover:bg-secondary/80">
+                          {code}
+                        </Badge>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 text-sm" onClick={(e) => e.stopPropagation()}>
+                        <div className="space-y-1">
+                          <p className="font-medium">{code}</p>
+                          {description && <p className="text-muted-foreground">{description}</p>}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  );
+                }
+                return <span className="text-sm text-muted-foreground">-</span>;
+              }
+              if (typeof cnaeRaw === "object") {
+                const cnae = cnaeRaw as { codigo?: string; code?: string; descricao?: string; description?: string };
+                const code = cnae.codigo || cnae.code;
+                const description = cnae.descricao || cnae.description;
+                if (code) {
+                  return (
+                    <Popover>
+                      <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Badge variant="secondary" className="text-[10px] whitespace-nowrap rounded-sm cursor-pointer hover:bg-secondary/80">
+                          {code}
+                        </Badge>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 text-sm" onClick={(e) => e.stopPropagation()}>
+                        <div className="space-y-1">
+                          <p className="font-medium">{code}</p>
+                          {description && <p className="text-muted-foreground">{description}</p>}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  );
+                }
+              }
+              return <span className="text-sm text-muted-foreground">-</span>;
+            }
+            case "cnae_secundarios": {
+              const cnaesRaw = enrichment.cnae_secundarios ?? enrichment.cnae_secondary ?? enrichment.secondary_cnaes ?? enrichment.cnaes_secundarios;
+              if (Array.isArray(cnaesRaw) && cnaesRaw.length > 0) {
+                const parsedCnaes = cnaesRaw.map((cnaeItem) => {
+                  if (typeof cnaeItem === "string") {
+                    const parts = cnaeItem.split(" - ");
+                    return {
+                      code: parts[0]?.trim(),
+                      description: parts.length > 1 ? parts.slice(1).join(" - ").trim() : undefined,
+                    };
+                  }
+                  const cnae = cnaeItem as { codigo?: string; code?: string; descricao?: string; description?: string };
+                  return {
+                    code: cnae.codigo ?? cnae.code,
+                    description: cnae.descricao ?? cnae.description,
+                  };
+                }).filter((c) => c.code);
+
+                if (parsedCnaes.length === 0) {
+                  return <span className="text-sm text-muted-foreground">-</span>;
+                }
+
+                const displayCodes = parsedCnaes.slice(0, 3).map((c) => c.code).join(", ");
+                const remainingCount = parsedCnaes.length > 3 ? parsedCnaes.length - 3 : 0;
+
+                return (
+                  <Popover>
+                    <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <div className="flex gap-1 items-center cursor-pointer">
+                        <Badge variant="secondary" className="text-[10px] whitespace-nowrap rounded-sm hover:bg-secondary/80">
+                          {displayCodes}{remainingCount > 0 ? ` +${remainingCount}` : ""}
+                        </Badge>
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-96 text-sm max-h-80 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                      <div className="space-y-3">
+                        <p className="font-medium text-muted-foreground">CNAEs Secundários ({parsedCnaes.length})</p>
+                        {parsedCnaes.map((cnae, index) => (
+                          <div key={index} className="space-y-0.5 pb-2 border-b last:border-0 last:pb-0">
+                            <p className="font-medium">{cnae.code}</p>
+                            {cnae.description && <p className="text-muted-foreground text-xs">{cnae.description}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                );
+              }
+              return <span className="text-sm text-muted-foreground">-</span>;
+            }
+            case "establishment_identifier": {
+              const identifier = enrichment.establishment_identifier as { descricao?: string; description?: string } | string | null;
+              let identifierText: string | undefined;
+              if (typeof identifier === "string" && identifier) {
+                identifierText = identifier;
+              } else if (typeof identifier === "object" && identifier) {
+                identifierText = identifier.description || identifier.descricao;
+              }
+              if (identifierText) {
+                return (
+                  <Badge variant="secondary" className="text-[10px] whitespace-nowrap rounded-sm">
+                    {identifierText}
+                  </Badge>
+                );
+              }
+              return <span className="text-sm text-muted-foreground">-</span>;
+            }
+            case "activity_start_date":
+            case "registration_status_date": {
+              const dateValue = enrichment[brazilColumn.field] as string | null;
+              if (dateValue) {
+                try {
+                  const date = new Date(dateValue);
+                  const formatted = date.toLocaleDateString("pt-BR");
+                  return <span className="text-sm truncate">{formatted}</span>;
+                } catch {
+                  return <span className="text-sm truncate">{dateValue}</span>;
+                }
+              }
+              return <span className="text-sm text-muted-foreground">-</span>;
+            }
+            case "legal_nature": {
+              const legalNature = enrichment.legal_nature as { description?: string; codigo?: string; descricao?: string } | string | null;
+              if (typeof legalNature === "string" && legalNature) {
+                return <span className="text-sm truncate" title={legalNature}>{legalNature}</span>;
+              }
+              if (typeof legalNature === "object" && legalNature) {
+                const description = legalNature.description || legalNature.descricao;
+                if (description) {
+                  return <span className="text-sm truncate" title={description}>{description}</span>;
+                }
+              }
+              return <span className="text-sm text-muted-foreground">-</span>;
+            }
+            case "economic_sector": {
+              const sector = enrichment.economic_sector as string | null;
+              if (sector) {
+                return <span className="text-sm truncate" title={sector}>{sector}</span>;
+              }
+              return <span className="text-sm text-muted-foreground">-</span>;
+            }
+            case "simples.mei_option":
+            case "simples.simples_option": {
+              const simples = enrichment.simples as { mei_option?: boolean; simples_option?: boolean } | null;
+              const isMei = brazilColumn.field === "simples.mei_option";
+              const optionValue = isMei ? simples?.mei_option : simples?.simples_option;
+              if (optionValue === true) {
+                return (
+                  <Badge variant="secondary" className="text-[10px] whitespace-nowrap rounded-sm bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                    <Check className="h-3 w-3 mr-1" />
+                    Yes
+                  </Badge>
+                );
+              } else if (optionValue === false) {
+                return (
+                  <Badge variant="secondary" className="text-[10px] whitespace-nowrap rounded-sm bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                    <X className="h-3 w-3 mr-1" />
+                    No
+                  </Badge>
+                );
+              }
+              return <span className="text-sm text-muted-foreground">-</span>;
+            }
+            case "registration_status": {
+              const status = enrichment.registration_status as { description?: string; descricao?: string } | string | null;
+              let statusText: string | undefined;
+              if (typeof status === "string" && status) {
+                statusText = status;
+              } else if (typeof status === "object" && status) {
+                statusText = status.description || status.descricao;
+              }
+              if (statusText) {
+                return (
+                  <Badge variant="secondary" className="text-[10px] whitespace-nowrap rounded-sm">
+                    {statusText}
+                  </Badge>
+                );
+              }
+              return <span className="text-sm text-muted-foreground">-</span>;
+            }
+            case "partners": {
+              const partnersRaw = enrichment.partners as Array<{
+                name?: string;
+                nome?: string;
+                faixa_etaria?: { descricao?: string };
+                qualificacao?: { descricao?: string };
+                identificador?: { descricao?: string };
+              }> | null;
+              if (partnersRaw && partnersRaw.length > 0) {
+                return (
+                  <div className="flex gap-1 overflow-hidden">
+                    {partnersRaw.slice(0, 2).map((partner, index) => {
+                      const partnerName = partner.name || partner.nome;
+                      if (!partnerName) return null;
+                      return (
+                        <Popover key={index}>
+                          <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Badge variant="secondary" className="text-[10px] whitespace-nowrap rounded-sm shrink-0 cursor-pointer hover:bg-secondary/80">
+                              {partnerName}
+                            </Badge>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80 text-sm" onClick={(e) => e.stopPropagation()}>
+                            <div className="space-y-2">
+                              <p className="font-medium">{partnerName}</p>
+                              {partner.faixa_etaria?.descricao && (
+                                <p className="text-muted-foreground">
+                                  <span className="font-medium">Age Range:</span> {partner.faixa_etaria.descricao}
+                                </p>
+                              )}
+                              {partner.qualificacao?.descricao && (
+                                <p className="text-muted-foreground">
+                                  <span className="font-medium">Qualification:</span> {partner.qualificacao.descricao}
+                                </p>
+                              )}
+                              {partner.identificador?.descricao && (
+                                <p className="text-muted-foreground">
+                                  <span className="font-medium">Identifier:</span> {partner.identificador.descricao}
+                                </p>
+                              )}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      );
+                    })}
+                    {partnersRaw.length > 2 && (
+                      <Badge variant="outline" className="text-[10px] whitespace-nowrap rounded-sm shrink-0">
+                        +{partnersRaw.length - 2}
+                      </Badge>
+                    )}
+                  </div>
+                );
+              }
+              return <span className="text-sm text-muted-foreground">-</span>;
+            }
+            default:
+              return <span className="text-sm text-muted-foreground">-</span>;
+          }
+        }
+
+        if (brazilColumn) {
+          return <span className="text-sm text-muted-foreground">-</span>;
+        }
+
         return null;
       }
     }
@@ -718,7 +1054,33 @@ export function CompanyTable({
         return <Globe className={iconClass} />;
       case "linkedin":
         return <LinkedInIcon className={iconClass} />;
+      case "brazil_cnpj":
+        return <Hash className={iconClass} />;
+      case "brazil_share_capital":
+        return <DollarSign className={iconClass} />;
+      case "brazil_primary_cnae":
+      case "brazil_secondary_cnae":
+        return <Factory className={iconClass} />;
+      case "brazil_establishment_identifier":
+        return <Building2 className={iconClass} />;
+      case "brazil_activity_start_date":
+      case "brazil_registration_status_date":
+        return <Calendar className={iconClass} />;
+      case "brazil_legal_nature":
+        return <FileText className={iconClass} />;
+      case "brazil_economic_sector":
+        return <Briefcase className={iconClass} />;
+      case "brazil_mei":
+      case "brazil_simples":
+        return <CircleDot className={iconClass} />;
+      case "brazil_registration_status":
+        return <FileText className={iconClass} />;
+      case "brazil_partners":
+        return <Users className={iconClass} />;
       default:
+        if (columnId.startsWith("tech_")) {
+          return <Cpu className={iconClass} />;
+        }
         return null;
     }
   };
@@ -739,18 +1101,33 @@ export function CompanyTable({
 
     const icon = getColumnIcon(column.id);
     const label = column.label;
-    const prefixMatch = label.match(/^(Company)\s+(.+)$/i);
 
-    if (prefixMatch) {
+    const threePartMatch = label.match(/^(Company)\s+(Technology|Brazil)\s+(.+)$/i);
+    if (threePartMatch) {
       return (
         <span className="flex items-center gap-1.5">
           {icon}
-          {prefixMatch[1]}
+          {threePartMatch[1]}
           <ChevronRight className="h-3 w-3" />
-          {prefixMatch[2]}
+          {threePartMatch[2]}
+          <ChevronRight className="h-3 w-3" />
+          {threePartMatch[3]}
         </span>
       );
     }
+
+    const twoPartMatch = label.match(/^(Company)\s+(.+)$/i);
+    if (twoPartMatch) {
+      return (
+        <span className="flex items-center gap-1.5">
+          {icon}
+          {twoPartMatch[1]}
+          <ChevronRight className="h-3 w-3" />
+          {twoPartMatch[2]}
+        </span>
+      );
+    }
+
     return (
       <span className="flex items-center gap-1.5">
         {icon}

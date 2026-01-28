@@ -15,6 +15,13 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  FileSearch,
+  AlertCircle,
+  Calendar,
+  Phone,
+  Mail,
+  Hash,
+  Briefcase,
 } from "lucide-react";
 import {
   Sheet,
@@ -43,7 +50,14 @@ interface CompanyDrawerProps {
   onOpenChange: (open: boolean) => void;
 }
 
-type TabType = "details" | "people";
+type TabType = "details" | "people" | "brazil";
+
+interface BrazilEnrichment {
+  document: string | null;
+  domain: string;
+  enrichment: Record<string, unknown> | null;
+  score: number;
+}
 
 const getCompanyLogo = (company: Business): string | undefined => {
   return company.logo || company.logo_url;
@@ -170,6 +184,342 @@ function CompanyDetails({ company }: { company: Business }) {
             <ExternalLink className="h-4 w-4 text-muted-foreground" />
           </a>
         )}
+      </div>
+    </div>
+  );
+}
+
+const hasValue = (value: unknown): value is string | number | boolean => {
+  return value !== null && value !== undefined && value !== "";
+};
+
+const formatCNPJ = (cnpj: string): string => {
+  const digits = cnpj.replace(/\D/g, "");
+  if (digits.length !== 14) return cnpj;
+  return digits.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+};
+
+const formatDate = (dateStr: string | null | undefined): string => {
+  if (!dateStr) return "-";
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("pt-BR");
+  } catch {
+    return dateStr;
+  }
+};
+
+const formatCurrency = (value: number | null | undefined): string => {
+  if (value === null || value === undefined) return "-";
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
+};
+
+function CompanyBrazil({ company, organizationId }: { company: Business; organizationId: string }) {
+  const [data, setData] = useState<BrazilEnrichment | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hasFetched, setHasFetched] = useState(false);
+
+  const fetchBrazilData = useCallback(async () => {
+    if (!company.domain) {
+      setError("Company domain is required for enrichment");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `/api/organizations/${organizationId}/companies/enrichments/brazil?domain=${encodeURIComponent(company.domain)}`
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to fetch Brazil data");
+      }
+
+      const result = await response.json();
+      setData(result);
+      setHasFetched(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch Brazil data");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [company.domain, organizationId]);
+
+  if (!company.domain) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+        <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
+        <p className="text-sm text-muted-foreground">Company domain is required for Brazil enrichment</p>
+      </div>
+    );
+  }
+
+  if (!hasFetched && !isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+        <FileSearch className="h-12 w-12 text-muted-foreground mb-4" />
+        <p className="text-sm text-muted-foreground mb-4">
+          Search for company data from Receita Federal do Brasil
+        </p>
+        <Button onClick={fetchBrazilData} disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Searching...
+            </>
+          ) : (
+            <>
+              <FileSearch className="h-4 w-4 mr-2" />
+              Search CNPJ
+            </>
+          )}
+        </Button>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mb-2" />
+        <p className="text-sm text-muted-foreground">Searching Receita Federal...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+        <AlertCircle className="h-8 w-8 text-destructive mb-2" />
+        <p className="text-sm text-destructive mb-4">{error}</p>
+        <Button variant="outline" onClick={fetchBrazilData}>
+          Try Again
+        </Button>
+      </div>
+    );
+  }
+
+  if (!data || !data.document) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+        <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
+        <p className="text-sm text-muted-foreground mb-2">No CNPJ found for this company</p>
+        <p className="text-xs text-muted-foreground mb-4">
+          This company may not be Brazilian or the CNPJ could not be identified
+        </p>
+        <Button variant="outline" onClick={fetchBrazilData}>
+          Search Again
+        </Button>
+      </div>
+    );
+  }
+
+  const enrichment = data.enrichment || {};
+
+  return (
+    <div className="space-y-6 px-4 pb-4">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Hash className="h-4 w-4" />
+            CNPJ
+          </div>
+          <p className="text-lg font-mono font-semibold">{formatCNPJ(data.document)}</p>
+        </div>
+        {data.score > 0 && (
+          <div className="text-right">
+            <div className="text-xs text-muted-foreground">Confidence</div>
+            <div className="text-sm font-medium">{Math.round(data.score * 100)}%</div>
+          </div>
+        )}
+      </div>
+
+      <Separator />
+
+      {Object.keys(enrichment).length > 0 && (
+        <>
+          <div className="grid grid-cols-2 gap-4">
+            {hasValue(enrichment.razao_social) && (
+              <div className="col-span-2 space-y-1">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Building2 className="h-4 w-4" />
+                  Razão Social
+                </div>
+                <p className="text-sm">{String(enrichment.razao_social)}</p>
+              </div>
+            )}
+
+            {hasValue(enrichment.nome_fantasia) && (
+              <div className="col-span-2 space-y-1">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Briefcase className="h-4 w-4" />
+                  Nome Fantasia
+                </div>
+                <p className="text-sm">{String(enrichment.nome_fantasia)}</p>
+              </div>
+            )}
+
+            {hasValue(enrichment.situacao_cadastral) && (
+              <div className="space-y-1">
+                <div className="text-sm font-medium text-muted-foreground">Situação Cadastral</div>
+                <p className="text-sm">{String(enrichment.situacao_cadastral)}</p>
+              </div>
+            )}
+
+            {hasValue(enrichment.data_situacao_cadastral) && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  Data Situação
+                </div>
+                <p className="text-sm">{formatDate(String(enrichment.data_situacao_cadastral))}</p>
+              </div>
+            )}
+
+            {hasValue(enrichment.data_abertura) && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  Data de Abertura
+                </div>
+                <p className="text-sm">{formatDate(String(enrichment.data_abertura))}</p>
+              </div>
+            )}
+
+            {hasValue(enrichment.natureza_juridica) && (
+              <div className="space-y-1">
+                <div className="text-sm font-medium text-muted-foreground">Natureza Jurídica</div>
+                <p className="text-sm">{String(enrichment.natureza_juridica)}</p>
+              </div>
+            )}
+
+            {hasValue(enrichment.porte) && (
+              <div className="space-y-1">
+                <div className="text-sm font-medium text-muted-foreground">Porte</div>
+                <p className="text-sm">{String(enrichment.porte)}</p>
+              </div>
+            )}
+
+            {hasValue(enrichment.capital_social) && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <DollarSign className="h-4 w-4" />
+                  Capital Social
+                </div>
+                <p className="text-sm">{formatCurrency(Number(enrichment.capital_social))}</p>
+              </div>
+            )}
+
+            {hasValue(enrichment.cnae_principal) && (
+              <div className="col-span-2 space-y-1">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Factory className="h-4 w-4" />
+                  CNAE Principal
+                </div>
+                <p className="text-sm">{String(enrichment.cnae_principal)}</p>
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
+          <div className="space-y-4">
+            <div className="text-sm font-medium text-muted-foreground">Endereço</div>
+            <div className="grid grid-cols-2 gap-4">
+              {hasValue(enrichment.logradouro) && (
+                <div className="col-span-2 space-y-1">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <MapPin className="h-4 w-4" />
+                    Logradouro
+                  </div>
+                  <p className="text-sm">
+                    {[String(enrichment.logradouro), hasValue(enrichment.numero) ? String(enrichment.numero) : null, hasValue(enrichment.complemento) ? String(enrichment.complemento) : null]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </p>
+                </div>
+              )}
+
+              {hasValue(enrichment.bairro) && (
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-muted-foreground">Bairro</div>
+                  <p className="text-sm">{String(enrichment.bairro)}</p>
+                </div>
+              )}
+
+              {hasValue(enrichment.cep) && (
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-muted-foreground">CEP</div>
+                  <p className="text-sm">{String(enrichment.cep)}</p>
+                </div>
+              )}
+
+              {hasValue(enrichment.municipio) && (
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-muted-foreground">Município</div>
+                  <p className="text-sm">{String(enrichment.municipio)}</p>
+                </div>
+              )}
+
+              {hasValue(enrichment.uf) && (
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-muted-foreground">UF</div>
+                  <p className="text-sm">{String(enrichment.uf)}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {(hasValue(enrichment.telefone) || hasValue(enrichment.email)) && (
+            <>
+              <Separator />
+              <div className="space-y-4">
+                <div className="text-sm font-medium text-muted-foreground">Contato</div>
+                <div className="grid grid-cols-2 gap-4">
+                  {hasValue(enrichment.telefone) && (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                        <Phone className="h-4 w-4" />
+                        Telefone
+                      </div>
+                      <p className="text-sm">{String(enrichment.telefone)}</p>
+                    </div>
+                  )}
+
+                  {hasValue(enrichment.email) && (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                        <Mail className="h-4 w-4" />
+                        Email
+                      </div>
+                      <p className="text-sm">{String(enrichment.email)}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      <div className="pt-4">
+        <Button variant="outline" size="sm" onClick={fetchBrazilData} disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Updating...
+            </>
+          ) : (
+            "Refresh Data"
+          )}
+        </Button>
       </div>
     </div>
   );
@@ -423,17 +773,29 @@ export function CompanyDrawer({ company, open, onOpenChange }: CompanyDrawerProp
                 People
               </span>
             </button>
+            <button
+              onClick={() => setActiveTab("brazil")}
+              className={cn(
+                "px-4 py-1.5 text-sm font-medium rounded-md transition-colors",
+                activeTab === "brazil"
+                  ? "bg-[#30302f] text-white shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <span className="flex items-center gap-2">
+                <FileSearch className="h-4 w-4" />
+                Brazil
+              </span>
+            </button>
           </div>
         </div>
 
         <Separator className="my-4" />
 
         <div className="flex-1 overflow-y-auto">
-          {activeTab === "details" ? (
-            <CompanyDetails company={company} />
-          ) : (
-            <CompanyPeople company={company} organizationId={organizationId} />
-          )}
+          {activeTab === "details" && <CompanyDetails company={company} />}
+          {activeTab === "people" && <CompanyPeople company={company} organizationId={organizationId} />}
+          {activeTab === "brazil" && <CompanyBrazil company={company} organizationId={organizationId} />}
         </div>
       </SheetContent>
     </Sheet>
